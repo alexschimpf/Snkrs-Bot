@@ -20,7 +20,7 @@ if not SHOE_URL:
 # e.g. "2018-08-14 7:00:00"
 RELEASE_TIME = None
 if not RELEASE_TIME:
-    raise Exception("Please provide a release time")
+    print("WARNING: No release time provided")
 
 # e.g. "10"
 SHOE_SIZE = None
@@ -64,9 +64,10 @@ driver.find_element_by_xpath("//input[@value='LOG IN']").click()
 WebDriverWait(driver, 100000, 0.01).until(
     EC.visibility_of_element_located((By.XPATH, "//span[text()='My Account']")))
 
-print("Waiting until release time")
-release_time = parser.parse(RELEASE_TIME)
-pause.until(release_time)
+if RELEASE_TIME:
+    print("Waiting until release time")
+    release_time = parser.parse(RELEASE_TIME)
+    pause.until(release_time)
 
 while True:
     print("Refreshing launch page")
