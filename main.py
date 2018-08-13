@@ -104,8 +104,16 @@ while True:
             EC.visibility_of_element_located((By.XPATH, "//a[text()='Checkout']")))
         driver.find_element_by_xpath("//a[text()='Checkout']").click()
 
+        print("Purchasing shoe")
         WebDriverWait(driver, 100000, 0.01).until(
             EC.visibility_of_element_located((By.XPATH, "//button[text()='Place Order']")))
+
+        # --------------------------------------------------------------------------------------
+        # CAUTION: Uncommenting the line below will make this script purchase the shoe!!!
+        # --------------------------------------------------------------------------------------
+        #
+        # driver.find_element_by_xpath("//button[text()='Place Order']").click()
+        #
     except Exception:
         continue
     else:
