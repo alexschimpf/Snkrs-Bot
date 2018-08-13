@@ -20,7 +20,7 @@ url = "https://www.nike.com/us/en_us/"
 # driver = webdriver.Chrome(executable_path="./bin/chromedriver_mac")
 driver = webdriver.Firefox(executable_path="./bin/geckodriver_mac")
 driver.maximize_window()
-#driver.set_page_load_timeout(2)
+driver.set_page_load_timeout(2)
 
 try:
     driver.get(url)
