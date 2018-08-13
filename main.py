@@ -1,4 +1,6 @@
+import pause
 import datetime
+from dateutil import parser
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -14,6 +16,21 @@ if not USERNAME or not PASSWORD:
 SHOE_URL = None
 if not SHOE_URL:
     raise Exception("Please provide a shoe URL")
+
+# e.g. "2018-08-14 7:00:00"
+RELEASE_TIME = None
+if not RELEASE_TIME:
+    raise Exception("Please provide a release time")
+
+# e.g. "10"
+SHOE_SIZE = None
+if not SHOE_SIZE:
+    raise Exception("Please provide a shoe size")
+
+# e.g. "/Users/alexschimpf/Desktop/snkrs_results.png"
+SCREENSHOT_PATH = None
+if not SCREENSHOT_PATH:
+    raise Exception("Please provide a screenshot path")
 
 url = "https://www.nike.com/us/en_us/"
 
@@ -47,6 +64,10 @@ driver.find_element_by_xpath("//input[@value='LOG IN']").click()
 WebDriverWait(driver, 100000, 0.01).until(
     EC.visibility_of_element_located((By.XPATH, "//span[text()='My Account']")))
 
+print("Waiting until release time")
+release_time = parser.parse(RELEASE_TIME)
+pause.until(release_time)
+
 while True:
     print("Refreshing launch page")
     try:
@@ -70,7 +91,8 @@ while True:
         driver.find_element_by_class_name("size-dropdown-button-css").click()
         WebDriverWait(driver, 100000, 0.01).until(
             EC.visibility_of_element_located((By.CLASS_NAME, "expanded")))
-        driver.find_element_by_class_name("expanded").find_element_by_xpath("//button[text()='10']").click()
+        driver.find_element_by_class_name("expanded").find_element_by_xpath(
+            "//button[text()='{}']".format(SHOE_SIZE)).click()
 
         print("Adding shoe to cart")
         WebDriverWait(driver, 100000, 0.01).until(
@@ -91,4 +113,4 @@ while True:
 
 print("Shoe purchased at: {}".format(str(datetime.datetime.now())))
 print("Getting screenshot")
-driver.save_screenshot('/Users/alexschimpf/Desktop/snkrs_results.png')
+driver.save_screenshot(SCREENSHOT_PATH)
