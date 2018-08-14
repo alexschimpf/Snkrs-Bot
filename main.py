@@ -1,125 +1,244 @@
+import os
+import sys
+import six
 import pause
+import argparse
 import datetime
-from dateutil import parser
+import dateutil
+import logging.config
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 
-USERNAME = None
-PASSWORD = None
-if not USERNAME or not PASSWORD:
-    raise Exception("Please provide a username and password")
 
-# e.g. "https://www.nike.com/launch/t/air-jordan-12-retro-olive-canvas-metallic-gold/"
-SHOE_URL = None
-if not SHOE_URL:
-    raise Exception("Please provide a shoe URL")
+logging.config.dictConfig({
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s [PID %(process)d] [Thread %(thread)d] [%(levelname)s] [%(name)s] %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "default",
+            "stream": "ext://sys.stdout"
+        }
+    },
+    "root": {
+        "level": "INFO",
+        "handlers": [
+            "console"
+        ]
+    }
+})
 
-# e.g. "2018-08-14 7:00:00"
-RELEASE_TIME = None
-if not RELEASE_TIME:
-    print("WARNING: No release time provided")
+NIKE_HOME_URL = "https://www.nike.com/us/en_us/"
+LOGGER = logging.getLogger()
 
-# e.g. "10"
-SHOE_SIZE = None
-if not SHOE_SIZE:
-    raise Exception("Please provide a shoe size")
 
-# e.g. "/Users/alexschimpf/Desktop/snkrs_results.png"
-SCREENSHOT_PATH = None
-if not SCREENSHOT_PATH:
-    raise Exception("Please provide a screenshot path")
+def run(driver, username, password, url, shoe_size, release_time=None, screenshot_path=None, purchase=False):
+    driver.maximize_window()
+    driver.set_page_load_timeout(2)
 
-url = "https://www.nike.com/us/en_us/"
-
-# driver = webdriver.Chrome(executable_path="./bin/chromedriver_mac")
-driver = webdriver.Firefox(executable_path="./bin/geckodriver_mac")
-driver.maximize_window()
-driver.set_page_load_timeout(2)
-
-try:
-    driver.get(url)
-except TimeoutException:
-    pass
-
-print("Clicking login button")
-WebDriverWait(driver, 100000, 0.1).until(
-    EC.visibility_of_element_located((By.XPATH, "//li[@js-hook='exp-join-login']/button")))
-driver.find_element_by_xpath("//li[@js-hook='exp-join-login']/button").click()
-
-print("Entering username and password")
-WebDriverWait(driver, 100000, 0.1).until(
-    EC.visibility_of_element_located((By.XPATH, "//input[@name='emailAddress']")))
-email_input = driver.find_element_by_xpath("//input[@name='emailAddress']")
-email_input.clear()
-email_input.send_keys(USERNAME)
-password_input = driver.find_element_by_xpath("//input[@name='password']")
-password_input.clear()
-password_input.send_keys(PASSWORD)
-
-print("Logging in")
-driver.find_element_by_xpath("//input[@value='LOG IN']").click()
-WebDriverWait(driver, 100000, 0.01).until(
-    EC.visibility_of_element_located((By.XPATH, "//span[text()='My Account']")))
-
-if RELEASE_TIME:
-    print("Waiting until release time")
-    release_time = parser.parse(RELEASE_TIME)
-    pause.until(release_time)
-
-while True:
-    print("Refreshing launch page")
     try:
-        driver.get(SHOE_URL)
+        login(driver=driver, username=username, password=password)
+    except Exception as e:
+        LOGGER.exception("Failed to login: " + str(e))
+        six.reraise(Exception, e, sys.exc_info()[2])
+
+    if release_time:
+        pause.until(dateutil.parser.parse(release_time))
+
+    while True:
+        try:
+            try:
+                LOGGER.info("Requesting page: " + url)
+                driver.get(url)
+            except TimeoutException:
+                LOGGER.info("Page load timed out but continuing anyway")
+
+            try:
+                select_shoe_size(driver=driver, shoe_size=shoe_size)
+            except Exception as e:
+                LOGGER.exception("Failed to select shoe size: " + str(e))
+                six.reraise(Exception, e, sys.exc_info()[2])
+
+            try:
+                click_buy_button(driver=driver)
+            except Exception as e:
+                LOGGER.exception("Failed to click buy button: " + str(e))
+                six.reraise(Exception, e, sys.exc_info()[2])
+
+            try:
+                select_payment_option(driver=driver)
+            except Exception as e:
+                LOGGER.exception("Failed to select payment option: " + str(e))
+                six.reraise(Exception, e, sys.exc_info()[2])
+
+            try:
+                click_save_button(driver=driver)
+            except Exception as e:
+                LOGGER.exception("Failed to click save button: " + str(e))
+                six.reraise(Exception, e, sys.exc_info()[2])
+
+            if purchase:
+                try:
+                    click_submit_button(driver=driver)
+                except Exception as e:
+                    LOGGER.exception("Failed to click submit button: " + str(e))
+                    six.reraise(Exception, e, sys.exc_info()[2])
+
+            LOGGER.info("Purchased shoe at: " + str(datetime.datetime.now()))
+            break
+        except Exception as e:
+            continue
+
+    if screenshot_path:
+        driver.save_screenshot(screenshot_path)
+
+    driver.quit()
+
+
+def login(driver, username, password):
+    try:
+        LOGGER.info("Requesting page: " + NIKE_HOME_URL)
+        driver.get(NIKE_HOME_URL)
     except TimeoutException:
-        pass
+        LOGGER.info("Page load timed out but continuing anyway")
 
-    try:
-        WebDriverWait(driver, 0.5, 0.01).until(
-            EC.visibility_of_element_located((By.XPATH, "//button[text()='ADD TO CART']")))
-    except Exception:
-        continue
-    else:
-        print("Shoe is available")
-        pass
+    LOGGER.info("Waiting for login button to become clickable")
+    wait_until_clickable(driver=driver, xpath="//li[@js-hook='exp-join-login']/button")
 
-    try:
-        print("Selecting shoe size")
-        WebDriverWait(driver, 100000, 0.01).until(
-            EC.visibility_of_element_located((By.CLASS_NAME, "size-dropdown-button-css")))
-        driver.find_element_by_class_name("size-dropdown-button-css").click()
-        WebDriverWait(driver, 100000, 0.01).until(
-            EC.visibility_of_element_located((By.CLASS_NAME, "expanded")))
-        driver.find_element_by_class_name("expanded").find_element_by_xpath(
-            "//button[text()='{}']".format(SHOE_SIZE)).click()
+    LOGGER.info("Clicking login button")
+    driver.find_element_by_xpath("//li[@js-hook='exp-join-login']/button").click()
 
-        print("Adding shoe to cart")
-        WebDriverWait(driver, 100000, 0.01).until(
-            EC.visibility_of_element_located((By.XPATH, "//button[text()='ADD TO CART']")))
-        driver.find_element_by_xpath("//button[text()='ADD TO CART']").click()
+    LOGGER.info("Waiting for login fields to become visible")
+    wait_until_visible(driver=driver, xpath="//input[@name='emailAddress']")
 
-        print("Checking out")
-        WebDriverWait(driver, 100000, 0.01).until(
-            EC.visibility_of_element_located((By.XPATH, "//a[text()='Checkout']")))
-        driver.find_element_by_xpath("//a[text()='Checkout']").click()
+    LOGGER.info("Entering username and password")
+    email_input = driver.find_element_by_xpath("//input[@name='emailAddress']")
+    email_input.clear()
+    email_input.send_keys(username)
+    password_input = driver.find_element_by_xpath("//input[@name='password']")
+    password_input.clear()
+    password_input.send_keys(password)
 
-        print("Purchasing shoe")
-        WebDriverWait(driver, 100000, 0.01).until(
-            EC.visibility_of_element_located((By.XPATH, "//button[text()='Place Order']")))
+    LOGGER.info("Logging in")
+    driver.find_element_by_xpath("//input[@value='LOG IN']").click()
+    wait_until_visible(driver=driver, xpath="//span[text()='My Account']")
 
-        # --------------------------------------------------------------------------------------
-        # CAUTION: Uncommenting the line below will make this script purchase the shoe!!!
-        # --------------------------------------------------------------------------------------
-        #
-        # driver.find_element_by_xpath("//button[text()='Place Order']").click()
-        #
-    except Exception:
-        continue
-    else:
-        break
+    LOGGER.info("Successfully logged in")
 
-print("Shoe purchased at: {}".format(str(datetime.datetime.now())))
-print("Getting screenshot")
-driver.save_screenshot(SCREENSHOT_PATH)
+
+def select_shoe_size(driver, shoe_size):
+    LOGGER.info("Waiting for size dropdown button to appear")
+    WebDriverWait(driver, 1, 0.01).until(
+        EC.visibility_of_element_located((By.CLASS_NAME, "size-dropdown-button-css")))
+
+    LOGGER.info("Clicking size dropdown button")
+    driver.find_element_by_class_name("size-dropdown-button-css").click()
+
+    LOGGER.info("Waiting for size dropdown to appear")
+    WebDriverWait(driver, 1, 0.01).until(
+        EC.visibility_of_element_located((By.CLASS_NAME, "expanded")))
+
+    LOGGER.info("Selecting size from dropdown")
+    driver.find_element_by_class_name("expanded").find_element_by_xpath(
+        "//button[text()='{}']".format(shoe_size)).click()
+
+
+def click_buy_button(driver):
+    xpath = "//button[@data-qa='feed-buy-cta']"
+
+    LOGGER.info("Waiting for buy button to appear")
+    WebDriverWait(driver, 1, 0.01).until(
+        EC.visibility_of_element_located((By.XPATH, xpath)))
+
+    LOGGER.info("Clicking buy button")
+    driver.find_element_by_xpath(xpath).click()
+
+
+def select_payment_option(driver):
+    xpath = "//input[data-qa='payment-radio']"
+
+    LOGGER.info("Waiting for payment checkbox to appear")
+    WebDriverWait(driver, 1, 0.01).until(
+        EC.visibility_of_element_located((By.XPATH, xpath)))
+
+    LOGGER.info("Checking payment checkbox")
+    driver.find_element_by_xpath(xpath).click()
+
+
+def click_save_button(driver):
+    xpath = "//button[text()='Save &amp; Continue']"
+
+    LOGGER.info("Waiting for save button to appear")
+    WebDriverWait(driver, 1, 0.01).until(
+        EC.visibility_of_element_located((By.XPATH, xpath)))
+
+    LOGGER.info("Clicking save button")
+    driver.find_element_by_xpath(xpath).click()
+
+
+def click_submit_button(driver):
+    xpath = "//button[text()='Submit Order']"
+
+    LOGGER.info("Waiting for submit button to appear")
+    WebDriverWait(driver, 1, 0.01).until(
+        EC.visibility_of_element_located((By.XPATH, xpath)))
+
+    LOGGER.info("Clicking submit button")
+    driver.find_element_by_xpath(xpath).click()
+
+
+def wait_until_clickable(driver, xpath, duration=10000, frequency=0.1):
+    WebDriverWait(driver, duration, frequency).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+
+
+def wait_until_visible(driver, xpath, duration=10000, frequency=0.1):
+    WebDriverWait(driver, duration, frequency).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--username", required=True)
+    parser.add_argument("--password", required=True)
+    parser.add_argument("--url", required=True)
+    parser.add_argument("--shoe-size", required=True)
+    parser.add_argument("--release-time", default=None)
+    parser.add_argument("--screenshot-path", default=None)
+    parser.add_argument("--driver-type", default="firefox", choices=("firefox", "chrome"))
+    parser.add_argument("--headless", action="store_true")
+    parser.add_argument("--purchase", action="store_true")
+
+    args = parser.parse_args()
+
+    driver_ = None
+    if args.driver_type == "firefox":
+        options = webdriver.FirefoxOptions()
+        if args.headless:
+            options.add_argument("--headless")
+        executable_path = None
+        if sys.platform == "darwin":
+            executable_path = "./bin/geckodriver_mac"
+        elif "linux" in sys.platform:
+            executable_path = "./bin/geckodriver_linux"
+        driver_ = webdriver.Firefox(executable_path=executable_path, firefox_options=options, log_path=os.devnull)
+    elif args.driver_type == "chrome":
+        options = webdriver.ChromeOptions()
+        if args.headless:
+            options.add_argument("headless")
+        executable_path = None
+        if sys.platform == "darwin":
+            executable_path = "./bin/chromedriver_mac"
+        elif "linux" in sys.platform:
+            executable_path = "./bin/chromedriver_linux"
+        driver_ = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
+
+    run(driver=driver_, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
+        release_time=args.release_time, screenshot_path=args.screenshot_path, purchase=args.purchase)
