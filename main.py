@@ -41,9 +41,14 @@ NIKE_HOME_URL = "https://www.nike.com/us/en_us/"
 LOGGER = logging.getLogger()
 
 
-def run(driver, username, password, url, shoe_size, release_time=None, screenshot_path=None, purchase=False):
+def run(driver, username, password, url, shoe_size, login_time=None, release_time=None,
+        screenshot_path=None, purchase=False):
     driver.maximize_window()
     driver.set_page_load_timeout(2)
+
+    if login_time:
+        LOGGER.info("Waiting until login time: " + login_time)
+        pause.until(dateutil.parser.parse(login_time))
 
     try:
         login(driver=driver, username=username, password=password)
@@ -52,6 +57,7 @@ def run(driver, username, password, url, shoe_size, release_time=None, screensho
         six.reraise(Exception, e, sys.exc_info()[2])
 
     if release_time:
+        LOGGER.info("Waiting until release time: " + release_time)
         pause.until(dateutil.parser.parse(release_time))
 
     while True:
@@ -95,7 +101,7 @@ def run(driver, username, password, url, shoe_size, release_time=None, screensho
 
             LOGGER.info("Purchased shoe at: " + str(datetime.datetime.now()))
             break
-        except Exception as e:
+        except Exception:
             continue
 
     if screenshot_path:
@@ -210,12 +216,12 @@ if __name__ == "__main__":
     parser.add_argument("--password", required=True)
     parser.add_argument("--url", required=True)
     parser.add_argument("--shoe-size", required=True)
+    parser.add_argument("--login-time", default=None)
     parser.add_argument("--release-time", default=None)
     parser.add_argument("--screenshot-path", default=None)
     parser.add_argument("--driver-type", default="firefox", choices=("firefox", "chrome"))
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--purchase", action="store_true")
-
     args = parser.parse_args()
 
     driver_ = None
@@ -241,4 +247,5 @@ if __name__ == "__main__":
         driver_ = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
 
     run(driver=driver_, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
-        release_time=args.release_time, screenshot_path=args.screenshot_path, purchase=args.purchase)
+        login_time=args.login_time, release_time=args.release_time, screenshot_path=args.screenshot_path,
+        purchase=args.purchase)
