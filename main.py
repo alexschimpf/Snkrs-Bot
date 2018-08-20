@@ -144,16 +144,14 @@ def login(driver, username, password):
 
 
 def select_shoe_size(driver, shoe_size):
-    LOGGER.info("Waiting for size dropdown button to appear")
-    WebDriverWait(driver, 10, 0.01).until(
-        EC.visibility_of_element_located((By.CLASS_NAME, "size-dropdown-button-css")))
+    LOGGER.info("Waiting for size dropdown button to become clickable")
+    wait_until_clickable(driver, class_name="size-dropdown-button-css", duration=10)
 
     LOGGER.info("Clicking size dropdown button")
     driver.find_element_by_class_name("size-dropdown-button-css").click()
 
     LOGGER.info("Waiting for size dropdown to appear")
-    WebDriverWait(driver, 10, 0.01).until(
-        EC.visibility_of_element_located((By.CLASS_NAME, "expanded")))
+    wait_until_visible(driver, class_name="expanded", duration=10)
 
     LOGGER.info("Selecting size from dropdown")
     driver.find_element_by_class_name("expanded").find_element_by_xpath(
@@ -163,9 +161,8 @@ def select_shoe_size(driver, shoe_size):
 def click_buy_button(driver):
     xpath = "//button[@data-qa='feed-buy-cta']"
 
-    LOGGER.info("Waiting for buy button to appear")
-    WebDriverWait(driver, 10, 0.01).until(
-        EC.visibility_of_element_located((By.XPATH, xpath)))
+    LOGGER.info("Waiting for buy button to become clickable")
+    wait_until_clickable(driver, xpath=xpath, duration=10)
 
     LOGGER.info("Clicking buy button")
     driver.find_element_by_xpath(xpath).click()
@@ -174,9 +171,8 @@ def click_buy_button(driver):
 def select_payment_option(driver):
     xpath = "//input[@data-qa='payment-radio']"
 
-    LOGGER.info("Waiting for payment checkbox to appear")
-    WebDriverWait(driver, 10, 0.01).until(
-        EC.visibility_of_element_located((By.XPATH, xpath)))
+    LOGGER.info("Waiting for payment checkbox to become clickable")
+    wait_until_clickable(driver, xpath=xpath, duration=10)
 
     LOGGER.info("Checking payment checkbox")
     driver.find_element_by_xpath(xpath).click()
@@ -185,9 +181,8 @@ def select_payment_option(driver):
 def click_save_button(driver):
     xpath = "//button[text()='Save &amp; Continue']"
 
-    LOGGER.info("Waiting for save button to appear")
-    WebDriverWait(driver, 10, 0.01).until(
-        EC.visibility_of_element_located((By.XPATH, xpath)))
+    LOGGER.info("Waiting for save button to become clickable")
+    wait_until_clickable(driver, xpath=xpath, duration=10)
 
     LOGGER.info("Clicking save button")
     driver.find_element_by_xpath(xpath).click()
@@ -196,20 +191,25 @@ def click_save_button(driver):
 def click_submit_button(driver):
     xpath = "//button[text()='Submit Order']"
 
-    LOGGER.info("Waiting for submit button to appear")
-    WebDriverWait(driver, 10, 0.01).until(
-        EC.visibility_of_element_located((By.XPATH, xpath)))
+    LOGGER.info("Waiting for submit button to become clickable")
+    wait_until_clickable(driver, xpath=xpath, duration=10)
 
     LOGGER.info("Clicking submit button")
     driver.find_element_by_xpath(xpath).click()
 
 
-def wait_until_clickable(driver, xpath, duration=10000, frequency=0.1):
-    WebDriverWait(driver, duration, frequency).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+def wait_until_clickable(driver, xpath=None, class_name=None, duration=10000, frequency=0.01):
+    if xpath:
+        WebDriverWait(driver, duration, frequency).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+    elif class_name:
+        WebDriverWait(driver, duration, frequency).until(EC.element_to_be_clickable((By.CLASS_NAME, class_name)))
 
 
-def wait_until_visible(driver, xpath, duration=10000, frequency=0.1):
-    WebDriverWait(driver, duration, frequency).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+def wait_until_visible(driver, xpath=None, class_name=None, duration=10000, frequency=0.01):
+    if xpath:
+        WebDriverWait(driver, duration, frequency).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+    elif class_name:
+        WebDriverWait(driver, duration, frequency).until(EC.visibility_of_element_located((By.CLASS_NAME, class_name)))
 
 
 if __name__ == "__main__":
