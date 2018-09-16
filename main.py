@@ -42,7 +42,7 @@ LOGGER = logging.getLogger()
 
 
 def run(driver, username, password, url, shoe_size, login_time=None, release_time=None,
-        page_load_timeout=None, screenshot_path=None, purchase=False):
+        page_load_timeout=None, screenshot_path=None, select_payment=False, purchase=False, num_retries=None):
     driver.maximize_window()
     driver.set_page_load_timeout(page_load_timeout)
 
@@ -60,6 +60,7 @@ def run(driver, username, password, url, shoe_size, login_time=None, release_tim
         LOGGER.info("Waiting until release time: " + release_time)
         pause.until(date_parser.parse(release_time))
 
+    num_retries_attempted = 0
     while True:
         try:
             try:
@@ -71,8 +72,8 @@ def run(driver, username, password, url, shoe_size, login_time=None, release_tim
             try:
                 select_shoe_size(driver=driver, shoe_size=shoe_size)
             except Exception as e:
+                # If we fail to select shoe size, try to buy anyway
                 LOGGER.exception("Failed to select shoe size: " + str(e))
-                six.reraise(Exception, e, sys.exc_info()[2])
 
             try:
                 click_buy_button(driver=driver)
@@ -80,17 +81,18 @@ def run(driver, username, password, url, shoe_size, login_time=None, release_tim
                 LOGGER.exception("Failed to click buy button: " + str(e))
                 six.reraise(Exception, e, sys.exc_info()[2])
 
-            try:
-                select_payment_option(driver=driver)
-            except Exception as e:
-                LOGGER.exception("Failed to select payment option: " + str(e))
-                six.reraise(Exception, e, sys.exc_info()[2])
+            if select_payment:
+                try:
+                    select_payment_option(driver=driver)
+                except Exception as e:
+                    LOGGER.exception("Failed to select payment option: " + str(e))
+                    six.reraise(Exception, e, sys.exc_info()[2])
 
-            try:
-                click_save_button(driver=driver)
-            except Exception as e:
-                LOGGER.exception("Failed to click save button: " + str(e))
-                six.reraise(Exception, e, sys.exc_info()[2])
+                try:
+                    click_save_button(driver=driver)
+                except Exception as e:
+                    LOGGER.exception("Failed to click save button: " + str(e))
+                    six.reraise(Exception, e, sys.exc_info()[2])
 
             if purchase:
                 try:
@@ -102,8 +104,11 @@ def run(driver, username, password, url, shoe_size, login_time=None, release_tim
             LOGGER.info("Purchased shoe")
             break
         except Exception:
-            break
-            # continue
+            if num_retries and num_retries_attempted < num_retries:
+                num_retries_attempted += 1
+                continue
+            else:
+                break
 
     if screenshot_path:
         LOGGER.info("Saving screenshot")
@@ -224,7 +229,9 @@ if __name__ == "__main__":
     parser.add_argument("--page-load-timeout", type=int, default=2)
     parser.add_argument("--driver-type", default="firefox", choices=("firefox", "chrome"))
     parser.add_argument("--headless", action="store_true")
+    parser.add_argument("--select-payment", action="store_true")
     parser.add_argument("--purchase", action="store_true")
+    parser.add_argument("--num-retries", type=int, default=1)
     args = parser.parse_args()
 
     driver_ = None
@@ -251,4 +258,5 @@ if __name__ == "__main__":
 
     run(driver=driver_, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
         login_time=args.login_time, release_time=args.release_time, page_load_timeout=args.page_load_timeout,
-        screenshot_path=args.screenshot_path, purchase=args.purchase)
+        screenshot_path=args.screenshot_path, select_payment=args.select_payment, purchase=args.purchase,
+        num_retries=args.num_retries)
