@@ -2,7 +2,7 @@
    It will not work for sneakers that are past their release day (or later in the release day). 
    This is because the purchase page changes to where the buy button redirects to a seperate checkout page (as opposed to a direct buy popup during release).
 It is a commandline script written solely in python.
-There are 4 selenium drivers in the /bin directory for both Chrome and Firefox on both Linux and MacOS.
+There are 4 selenium drivers in the bin directory for both Chrome and Firefox on both Linux and MacOS.
 I have found the Chrome driver for MacOS works best.
 
 Ideally, some pieces (or all?) of this could be replaced with direct Nike API requests instead of Selenium. However, I've found that Nike APIs are not very straightforward. 
