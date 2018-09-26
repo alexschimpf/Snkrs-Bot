@@ -2,6 +2,7 @@ import os
 import sys
 import six
 import pause
+import requests
 import argparse
 import logging.config
 from selenium import webdriver
@@ -10,6 +11,19 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
+
+"""
+
+This is an experimental script which attempts at utilizing some Nike APIs.
+
+Current implementation:
+    1. Login with Selenium
+    2. Using the driver's stored cookies, make a Nike API request to add the desired item to your cart
+    3. Load the checkout page and place an order
+    
+Not sure if this will be any faster than the other script...
+
+"""
 
 
 logging.config.dictConfig({
@@ -37,11 +51,13 @@ logging.config.dictConfig({
 })
 
 NIKE_HOME_URL = "https://www.nike.com/us/en_us/"
+NIKE_CHECKOUT_URL = "https://www.nike.com/checkout"
+NIKE_CART_API_URL = "https://secure-store.nike.com/us/services/jcartService"
 LOGGER = logging.getLogger()
 
 
-def run(driver, username, password, url, shoe_size, login_time=None, release_time=None,
-        page_load_timeout=None, screenshot_path=None, select_payment=False, purchase=False, num_retries=None):
+def run(driver, username, password, product_id, sku_id, shoe_size, login_time=None, release_time=None,
+        page_load_timeout=None, screenshot_path=None, purchase=False, num_retries=None):
     driver.maximize_window()
     driver.set_page_load_timeout(page_load_timeout)
 
@@ -63,41 +79,23 @@ def run(driver, username, password, url, shoe_size, login_time=None, release_tim
     while True:
         try:
             try:
-                LOGGER.info("Requesting page: " + url)
-                driver.get(url)
+                LOGGER.info("Adding item to cart")
+                add_item_to_cart(driver=driver, product_id=product_id, sku_id=sku_id, size=shoe_size)
+            except Exception as e:
+                LOGGER.exception("Failed to add item to cart " + str(e))
+                six.reraise(Exception, e, sys.exc_info()[2])
+
+            try:
+                LOGGER.info("Requesting page: " + NIKE_CHECKOUT_URL)
+                driver.get(NIKE_CHECKOUT_URL)
             except TimeoutException:
                 LOGGER.info("Page load timed out but continuing anyway")
 
-            try:
-                select_shoe_size(driver=driver, shoe_size=shoe_size)
-            except Exception as e:
-                # If we fail to select shoe size, try to buy anyway
-                LOGGER.exception("Failed to select shoe size: " + str(e))
-
-            try:
-                click_buy_button(driver=driver)
-            except Exception as e:
-                LOGGER.exception("Failed to click buy button: " + str(e))
-                six.reraise(Exception, e, sys.exc_info()[2])
-
-            if select_payment:
-                try:
-                    select_payment_option(driver=driver)
-                except Exception as e:
-                    LOGGER.exception("Failed to select payment option: " + str(e))
-                    six.reraise(Exception, e, sys.exc_info()[2])
-
-                try:
-                    click_save_button(driver=driver)
-                except Exception as e:
-                    LOGGER.exception("Failed to click save button: " + str(e))
-                    six.reraise(Exception, e, sys.exc_info()[2])
-
             if purchase:
                 try:
-                    click_submit_button(driver=driver)
+                    click_place_order_button(driver=driver)
                 except Exception as e:
-                    LOGGER.exception("Failed to click submit button: " + str(e))
+                    LOGGER.exception("Failed to click place order button: " + str(e))
                     six.reraise(Exception, e, sys.exc_info()[2])
 
             LOGGER.info("Purchased shoe")
@@ -147,59 +145,45 @@ def login(driver, username, password):
     LOGGER.info("Successfully logged in")
 
 
-def select_shoe_size(driver, shoe_size):
-    LOGGER.info("Waiting for size dropdown button to become clickable")
-    wait_until_clickable(driver, class_name="size-dropdown-button-css", duration=10)
+def click_place_order_button(driver):
+    xpath = "//button[text()='Place Order']"
 
-    LOGGER.info("Clicking size dropdown button")
-    driver.find_element_by_class_name("size-dropdown-button-css").click()
-
-    LOGGER.info("Waiting for size dropdown to appear")
-    wait_until_visible(driver, class_name="expanded", duration=10)
-
-    LOGGER.info("Selecting size from dropdown")
-    driver.find_element_by_class_name("expanded").find_element_by_xpath(
-        "//button[text()='{}']".format(shoe_size)).click()
-
-
-def click_buy_button(driver):
-    xpath = "//button[@data-qa='feed-buy-cta']"
-
-    LOGGER.info("Waiting for buy button to become clickable")
+    LOGGER.info("Waiting for place order button to become clickable")
     wait_until_clickable(driver, xpath=xpath, duration=10)
 
-    LOGGER.info("Clicking buy button")
+    LOGGER.info("Clicking place order button")
     driver.find_element_by_xpath(xpath).click()
 
 
-def select_payment_option(driver):
-    xpath = "//input[@data-qa='payment-radio']"
-
-    LOGGER.info("Waiting for payment checkbox to become clickable")
-    wait_until_clickable(driver, xpath=xpath, duration=10)
-
-    LOGGER.info("Checking payment checkbox")
-    driver.find_element_by_xpath(xpath).click()
-
-
-def click_save_button(driver):
-    xpath = "//button[text()='Save &amp; Continue']"
-
-    LOGGER.info("Waiting for save button to become clickable")
-    wait_until_clickable(driver, xpath=xpath, duration=10)
-
-    LOGGER.info("Clicking save button")
-    driver.find_element_by_xpath(xpath).click()
-
-
-def click_submit_button(driver):
-    xpath = "//button[text()='Submit Order']"
-
-    LOGGER.info("Waiting for submit button to become clickable")
-    wait_until_clickable(driver, xpath=xpath, duration=10)
-
-    LOGGER.info("Clicking submit button")
-    driver.find_element_by_xpath(xpath).click()
+def add_item_to_cart(driver, product_id, sku_id, size):
+    cookies = driver.get_cookies()
+    params = {
+        "action": "addItem",
+        "lang_locale": "en_US",
+        "catalogId": "1",
+        "productId": product_id,
+        "qty": "1",
+        "price": "",
+        "skuAndSize": "{}:{}".format(sku_id, size),
+        "rt": "json",
+        "view": "3",
+        "skuId": sku_id,
+        "displaySize": "10"
+    }
+    headers = {
+        "user-agent": "Mozilla/5.0 (X11; Linux x86_64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36",
+        "origin": "https://www.nike.com",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US,en;q=0.9",
+        "accept": "*/*",
+        "scheme": "https"
+    }
+    response = requests.get(url=NIKE_CART_API_URL,
+                            params=params, headers=headers, cookies=cookies)
+    if response.status_code != 200:
+        raise Exception("Request to add item to cart failed (code {}): {}".format(
+            response.status_code, response.text))
 
 
 def wait_until_clickable(driver, xpath=None, class_name=None, duration=10000, frequency=0.01):
@@ -220,7 +204,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--username", required=True)
     parser.add_argument("--password", required=True)
-    parser.add_argument("--url", required=True)
+    parser.add_argument("--product-id", required=True)
+    parser.add_argument("--sku-id", required=True)
     parser.add_argument("--shoe-size", required=True)
     parser.add_argument("--login-time", default=None)
     parser.add_argument("--release-time", default=None)
@@ -228,7 +213,6 @@ if __name__ == "__main__":
     parser.add_argument("--page-load-timeout", type=int, default=2)
     parser.add_argument("--driver-type", default="firefox", choices=("firefox", "chrome"))
     parser.add_argument("--headless", action="store_true")
-    parser.add_argument("--select-payment", action="store_true")
     parser.add_argument("--purchase", action="store_true")
     parser.add_argument("--num-retries", type=int, default=1)
     args = parser.parse_args()
@@ -255,7 +239,7 @@ if __name__ == "__main__":
             executable_path = "./bin/chromedriver_linux"
         driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
 
-    run(driver=driver, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
-        login_time=args.login_time, release_time=args.release_time, page_load_timeout=args.page_load_timeout,
-        screenshot_path=args.screenshot_path, select_payment=args.select_payment, purchase=args.purchase,
-        num_retries=args.num_retries)
+    run(driver=driver, username=args.username, password=args.password, product_id=args.product_id,
+        sku_id=args.sku_id, shoe_size=args.shoe_size, login_time=args.login_time, release_time=args.release_time,
+        page_load_timeout=args.page_load_timeout, screenshot_path=args.screenshot_path,
+        purchase=args.purchase, num_retries=args.num_retries)
