@@ -245,7 +245,6 @@ if __name__ == "__main__":
         options = webdriver.FirefoxOptions()
         if args.headless:
             options.add_argument("--headless")
-        executable_path = None
         if sys.platform == "darwin":
             executable_path = "./bin/geckodriver_mac"
         elif "linux" in sys.platform:
@@ -257,7 +256,6 @@ if __name__ == "__main__":
         options = webdriver.ChromeOptions()
         if args.headless:
             options.add_argument("headless")
-        executable_path = None
         if sys.platform == "darwin":
             executable_path = "./bin/chromedriver_mac"
         elif "linux" in sys.platform:
