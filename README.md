@@ -1,4 +1,6 @@
-   This is a Selenium bot for buying a given sneaker from the Nike Snkrs website ON RELEASE DAY. 
+***PLEASE READ!***
+
+This is a Selenium bot for buying a given sneaker from the Nike Snkrs website ON RELEASE DAY. 
    It will not work for sneakers that are past their release day (or later in the release day). 
    `Please note that this script was written with the US site in mind, so Nike sites for other countries will likely cause problems.`
    This is because the purchase page changes to where the buy button redirects to a seperate checkout page (as opposed to a direct buy popup during release).
