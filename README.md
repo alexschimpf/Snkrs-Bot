@@ -1,8 +1,9 @@
    This is a Selenium bot for buying a given sneaker from the Nike Snkrs website ON RELEASE DAY. 
    It will not work for sneakers that are past their release day (or later in the release day). 
+   `Please note that this script was written with the US site in mind, so Nike sites for other countries will likely cause problems.`
    This is because the purchase page changes to where the buy button redirects to a seperate checkout page (as opposed to a direct buy popup during release).
-It is a commandline script written solely in python.
-There are 4 selenium drivers in the bin directory for both Chrome and Firefox on both Linux and MacOS.
+It is a commandline script written solely in python. `Please run with python 3.7.`
+There are 4 selenium drivers in the bin directory for both Chrome and Firefox on both Linux and MacOS. `I have not added the drivers for Windows.`
 I have found the Firefox driver for MacOS works best.
 
 Ideally, some pieces (or all?) of this could be replaced with direct Nike API requests instead of Selenium. However, I've found that Nike APIs are not very straightforward. 
@@ -31,6 +32,9 @@ Here is a list and description of the different arguments to use for the script:
 
 <b>--screenshot-path</b>
 * If given, the bot will take a screenshot of the page after purchasing and save it at the given file path (may be useful for debugging)
+
+<b>--html-path</b>
+* If given, the bot will take the page source after purchasing and save it at the given file path (may be useful for debugging)
 
 <b>--page-load-timeout</b>
 * This is used to limit the page load time (in seconds), which can be useful when the page is still loading, but the UI is nevertheless useable. This is pretty much a necessity as I've noticed Nike's pages hang all the time. I'd recommend using 1-3 seconds for this. 

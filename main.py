@@ -41,7 +41,8 @@ LOGGER = logging.getLogger()
 
 
 def run(driver, username, password, url, shoe_size, login_time=None, release_time=None,
-        page_load_timeout=None, screenshot_path=None, select_payment=False, purchase=False, num_retries=None):
+        page_load_timeout=None, screenshot_path=None, html_path=None, select_payment=False, purchase=False,
+        num_retries=None):
     driver.maximize_window()
     driver.set_page_load_timeout(page_load_timeout)
 
@@ -112,6 +113,11 @@ def run(driver, username, password, url, shoe_size, login_time=None, release_tim
     if screenshot_path:
         LOGGER.info("Saving screenshot")
         driver.save_screenshot(screenshot_path)
+
+    if html_path:
+        LOGGER.info("Saving HTML source")
+        with open(html_path, "w") as f:
+            f.write(driver.page_source)
 
     driver.quit()
 
@@ -225,6 +231,7 @@ if __name__ == "__main__":
     parser.add_argument("--login-time", default=None)
     parser.add_argument("--release-time", default=None)
     parser.add_argument("--screenshot-path", default=None)
+    parser.add_argument("--html-path", default=None)
     parser.add_argument("--page-load-timeout", type=int, default=2)
     parser.add_argument("--driver-type", default="firefox", choices=("firefox", "chrome"))
     parser.add_argument("--headless", action="store_true")
@@ -243,6 +250,8 @@ if __name__ == "__main__":
             executable_path = "./bin/geckodriver_mac"
         elif "linux" in sys.platform:
             executable_path = "./bin/geckodriver_linux"
+        else:
+            raise Exception("Unsupported operating system. Please add your own Selenium driver for it.")
         driver = webdriver.Firefox(executable_path=executable_path, firefox_options=options, log_path=os.devnull)
     elif args.driver_type == "chrome":
         options = webdriver.ChromeOptions()
@@ -253,9 +262,11 @@ if __name__ == "__main__":
             executable_path = "./bin/chromedriver_mac"
         elif "linux" in sys.platform:
             executable_path = "./bin/chromedriver_linux"
+        else:
+            raise Exception("Unsupported operating system. Please add your own Selenium driver for it.")
         driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
 
     run(driver=driver, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
         login_time=args.login_time, release_time=args.release_time, page_load_timeout=args.page_load_timeout,
-        screenshot_path=args.screenshot_path, select_payment=args.select_payment, purchase=args.purchase,
-        num_retries=args.num_retries)
+        screenshot_path=args.screenshot_path, html_path=args.html_path, select_payment=args.select_payment,
+        purchase=args.purchase, num_retries=args.num_retries)
