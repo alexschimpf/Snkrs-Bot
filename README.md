@@ -54,7 +54,29 @@ Here is a list and description of the different arguments to use for the script:
 * If this argument is given, the bot WILL attempt to purchase the shoe so USE WITH CAUTION!
 
 <b>--num-retries</b>
-* If the bot fails for some reason, it will retry any number of times or until successful
+* If the bot fails for some reason, it will retry any number of times or until successful  
     
- 
-   
+<br><br><br>
+## Setup (Mac Only)
+---
+
+1. Instal Python (If you have brew run `brew install python3`) 
+2. Navigate to the root of the project
+3. Run `pip3 install -r requirements.txt`
+4. Download the Chrome or Firefox driver [here](https://www.selenium.dev/documentation/en/getting_started_with_webdriver/browsers/).
+5. Unzip the file and in a terminal execute the extracted binary, example below.
+
+Example for Chrome
+  ```bash
+     $ chromedriver
+  ```
+Example for Firefox
+ ```bash
+   $ geckodriver
+```
+
+6. In the root directory of the project run the program from a terminal (see example below)
+
+```bash
+$ python3 main.py --username myemail@gmail.com --password abc123 --url https://www.nike.com/t/flex-control-4-mens-training-shoe-14Z62l/CD0197-006 --shoe-size 6 --driver-type chrome
+```
