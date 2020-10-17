@@ -60,7 +60,7 @@ Here is a list and description of the different arguments to use for the script:
 ## Setup (Mac Only)
 ---
 
-1. Instal Python (If you have brew run `brew install python3`) 
+1. Install Python (If you have brew run `brew install python3`) 
 2. Navigate to the root of the project
 3. Run `pip3 install -r requirements.txt`
 4. Download the Chrome or Firefox driver [here](https://www.selenium.dev/documentation/en/getting_started_with_webdriver/browsers/).
