@@ -60,7 +60,7 @@ Here is a list and description of the different arguments to use for the script:
 <br><br><br>
 ## Usage (Mac Only)
 ---
-There are a few requirements to run the bot. First, you'll need to install [Python](https://www.python.org/downloads/) 3.7 or greater. The instructions below show you how to do this easily with [Brew](https://brew.sh/) but visiting Pythons website and downloading is an option but we're not providing instruction on how to do that. Next, if you decide to not use the drivers included with this repository, you'll need to download them yourself [here](https://www.selenium.dev/documentation/en/getting_started_with_webdriver/browsers/). Finally, the program is run from the terminal (command line), so you familiarize yourself with running python programs from the terminal [here](https://realpython.com/run-python-scripts/).
+There are a few requirements to run the bot. First, you'll need to install [Python](https://www.python.org/downloads/) 3.7 or greater. The instructions below show you how to do this easily with [Brew](https://brew.sh/) but visiting Pythons website and downloading is an option but we're not providing instruction on how to do that. Next, if you decide to not use the drivers included with this repository, you'll need to download them yourself [here](https://www.selenium.dev/documentation/en/getting_started_with_webdriver/browsers/). Finally, the program is run from the terminal (command line), so you should familiarize yourself with running python programs from the terminal [here](https://realpython.com/run-python-scripts/).
 
 
 ### Instructions
