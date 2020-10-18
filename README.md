@@ -24,7 +24,10 @@ Here is a list and description of the different arguments to use for the script:
 * URL for desired shoe
 
 <b>--shoe-size</b>
-* Self-explanatory (NOTE: this can fail if both women and men sizes are available)
+* Self-explanatory
+
+<b>--shoe-type</b>
+* Men's (M), Women's (W), Youth (Y) or Child (C)
 
 <b>--login-time</b>
 * If given, the bot will pause until a specific time before it logs in (can be any datetime format)
@@ -55,6 +58,9 @@ Here is a list and description of the different arguments to use for the script:
 
 <b>--num-retries</b>
 * If the bot fails for some reason, it will retry any number of times or until successful
+
+<b>--dont-quit</b>
+* Prevent window from closing (not headless mode). Useful if you wish to continue checkout process manually after Buy button is clicked
     
  
    
