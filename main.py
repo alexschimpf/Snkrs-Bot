@@ -157,7 +157,7 @@ def select_shoe_size(driver, shoe_size, shoe_type):
 
     LOGGER.info("Selecting size from dropdown")
 
-    if shoe_type == "Y" or shoe_type == "C":
+    if shoe_type in ("Y", "C"):
          shoe_size_type = shoe_size + shoe_type
     else:
          shoe_size_type = shoe_type + " " + shoe_size
@@ -265,15 +265,7 @@ if __name__ == "__main__":
             raise Exception("Unsupported operating system. Please add your own Selenium driver for it.")
         driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
         
-    shoe_type = "M"
-    if args.shoe_type == "Men" or args.shoe_type == "M" or args.shoe_type == "Men's" or args.shoe_type == "Mens" or args.shoe_type == "m":
-        shoe_type = "M"
-    elif args.shoe_type == "Women" or args.shoe_type == "W" or args.shoe_type == "Women's" or args.shoe_type == "Womens" or args.shoe_type == "w":      
-        shoe_type = "W"
-    elif args.shoe_type == "Youth" or args.shoe_type == "Y" or args.shoe_type == "youth" or args.shoe_type == "y":      
-        shoe_type = "Y"
-    elif args.shoe_type == "Child" or args.shoe_type == "C" or args.shoe_type == "child" or args.shoe_type == "c":      
-        shoe_type = "C"
+    shoe_type = args.shoe_type
         
     run(driver=driver, shoe_type=shoe_type, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
         login_time=args.login_time, release_time=args.release_time, page_load_timeout=args.page_load_timeout,
