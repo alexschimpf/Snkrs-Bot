@@ -148,7 +148,7 @@ def login(driver, username, password):
     LOGGER.info("Logging in")
     driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
     wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']")
-    
+
     LOGGER.info("Successfully logged in")
 
 
