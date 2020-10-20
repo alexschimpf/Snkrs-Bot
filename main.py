@@ -247,7 +247,7 @@ if __name__ == "__main__":
     parser.add_argument("--purchase", action="store_true")
     parser.add_argument("--num-retries", type=int, default=1)
     parser.add_argument("--dont-quit", action="store_true")
-    parser.add_argument("--shoe-type", default="M")
+    parser.add_argument("--shoe-type", default="M", choices=("M", "F", "W", "Y", "C"))
     args = parser.parse_args()
 
     driver = None
