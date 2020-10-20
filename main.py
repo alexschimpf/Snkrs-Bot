@@ -4,6 +4,7 @@ import six
 import pause
 import argparse
 import logging.config
+import re
 from selenium import webdriver
 from dateutil import parser as date_parser
 from selenium.webdriver.common.by import By
@@ -157,14 +158,22 @@ def select_shoe_size(driver, shoe_size, shoe_type):
 
     LOGGER.info("Selecting size from dropdown")
 
-    if shoe_type in ("Y", "C"):
-         shoe_size_type = shoe_size + shoe_type
+    # Get first element found text
+    size_text = driver.find_element_by_xpath("//li[@data-qa='size-available']/button").text
+            
+    # Determine if size only displaying or size type + size
+    if re.search("[a-zA-Z]", size_text):      
+        if shoe_type in ("Y", "C"):
+            shoe_size_type = shoe_size + shoe_type
+        else:
+            shoe_size_type = shoe_type + " " + shoe_size
+     
+        driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
+            "//button[text()[contains(.,'"+shoe_size_type+"')]]").click()
+    
     else:
-         shoe_size_type = shoe_type + " " + shoe_size
-         
-    LOGGER.info("Shoe size/type=" + shoe_size_type)
-    driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
-        "//button[text()[contains(.,'"+shoe_size_type+"')]]").click()
+        driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
+            "//button[text()='{}']".format(shoe_size)).click()
 
 
 def click_buy_button(driver):
