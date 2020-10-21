@@ -4,6 +4,7 @@ import six
 import pause
 import argparse
 import logging.config
+import re
 from selenium import webdriver
 from dateutil import parser as date_parser
 from selenium.webdriver.common.by import By
@@ -39,10 +40,9 @@ logging.config.dictConfig({
 NIKE_HOME_URL = "https://www.nike.com/login"
 LOGGER = logging.getLogger()
 
-
-def run(driver, username, password, url, shoe_size, login_time=None, release_time=None,
+def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, release_time=None,
         page_load_timeout=None, screenshot_path=None, html_path=None, select_payment=False, purchase=False,
-        num_retries=None):
+        num_retries=None, dont_quit=False):
     driver.maximize_window()
     driver.set_page_load_timeout(page_load_timeout)
 
@@ -68,12 +68,13 @@ def run(driver, username, password, url, shoe_size, login_time=None, release_tim
                 driver.get(url)
             except TimeoutException:
                 LOGGER.info("Page load timed out but continuing anyway")
-
+            
             try:
-                select_shoe_size(driver=driver, shoe_size=shoe_size)
+                select_shoe_size(driver=driver, shoe_size=shoe_size, shoe_type=shoe_type)
             except Exception as e:
-                # If we fail to select shoe size, try to buy anyway
+                # Try refreshing page since you can't click Buy button without selecting size
                 LOGGER.exception("Failed to select shoe size: " + str(e))
+                continue
 
             try:
                 click_buy_button(driver=driver)
@@ -119,6 +120,10 @@ def run(driver, username, password, url, shoe_size, login_time=None, release_tim
         with open(html_path, "w") as f:
             f.write(driver.page_source)
 
+    if dont_quit:
+        LOGGER.info("Preventing driver quit...")
+        input("Press Enter to quit...")
+    
     driver.quit()
 
 
@@ -142,24 +147,33 @@ def login(driver, username, password):
 
     LOGGER.info("Logging in")
     driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
-    wait_until_visible(driver=driver, xpath="//span[text()='My Account']")
+    wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']")
 
     LOGGER.info("Successfully logged in")
 
 
-def select_shoe_size(driver, shoe_size):
-    LOGGER.info("Waiting for size dropdown button to become clickable")
-    wait_until_clickable(driver, class_name="size-dropdown-button-css", duration=10)
-
-    LOGGER.info("Clicking size dropdown button")
-    driver.find_element_by_class_name("size-dropdown-button-css").click()
-
+def select_shoe_size(driver, shoe_size, shoe_type):
     LOGGER.info("Waiting for size dropdown to appear")
-    wait_until_visible(driver, class_name="expanded", duration=10)
+    wait_until_visible(driver, class_name="size-grid-button", duration=10)
 
     LOGGER.info("Selecting size from dropdown")
-    driver.find_element_by_class_name("expanded").find_element_by_xpath(
-        "//button[text()='{}']".format(shoe_size)).click()
+
+    # Get first element found text
+    size_text = driver.find_element_by_xpath("//li[@data-qa='size-available']/button").text
+            
+    # Determine if size only displaying or size type + size
+    if re.search("[a-zA-Z]", size_text):      
+        if shoe_type in ("Y", "C"):
+            shoe_size_type = shoe_size + shoe_type
+        else:
+            shoe_size_type = shoe_type + " " + shoe_size
+     
+        driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
+            "//button[text()[contains(.,'"+shoe_size_type+"')]]").click()
+    
+    else:
+        driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
+            "//button[text()='{}']".format(shoe_size)).click()
 
 
 def click_buy_button(driver):
@@ -232,6 +246,8 @@ if __name__ == "__main__":
     parser.add_argument("--select-payment", action="store_true")
     parser.add_argument("--purchase", action="store_true")
     parser.add_argument("--num-retries", type=int, default=1)
+    parser.add_argument("--dont-quit", action="store_true")
+    parser.add_argument("--shoe-type", default="M", choices=("M", "F", "W", "Y", "C"))
     args = parser.parse_args()
 
     driver = None
@@ -257,8 +273,10 @@ if __name__ == "__main__":
         else:
             raise Exception("Unsupported operating system. Please add your own Selenium driver for it.")
         driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
-
-    run(driver=driver, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
+        
+    shoe_type = args.shoe_type
+        
+    run(driver=driver, shoe_type=shoe_type, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
         login_time=args.login_time, release_time=args.release_time, page_load_timeout=args.page_load_timeout,
         screenshot_path=args.screenshot_path, html_path=args.html_path, select_payment=args.select_payment,
-        purchase=args.purchase, num_retries=args.num_retries)
+        purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit)
