@@ -1,17 +1,72 @@
 # PLEASE READ!
----
 
-This is a Selenium bot for buying a given sneaker from the Nike Snkrs website ON RELEASE DAY. 
-   It will not work for sneakers that are past their release day (or later in the release day). 
+
+This is a Selenium bot for buying a given sneaker from the Nike Snkrs website ON RELEASE DAY.
+   It will not work for sneakers that are past their release day (or later in the release day).
    `Please note that this script was written with the US site in mind, so Nike sites for other countries will likely cause problems.`
    This is because the purchase page changes to where the buy button redirects to a seperate checkout page (as opposed to a direct buy popup during release).
 It is a commandline script written solely in python. `Please run with python 3.7.`
-There are 4 selenium drivers in the bin directory for both Chrome and Firefox on both Linux and MacOS. `I have not added the drivers for Windows.`
+There are 6 selenium drivers in the bin directory for both Chrome and Firefox on Linux, MacOS, and Winows. `The drivers for other operating systems need to be installed from the instructions below.`
 I have found the Firefox driver for MacOS works best.
 
-Ideally, some pieces (or all?) of this could be replaced with direct Nike API requests instead of Selenium. However, I've found that Nike APIs are not very straightforward. 
+Ideally, some pieces (or all?) of this could be replaced with direct Nike API requests instead of Selenium. However, I've found that Nike APIs are not very straightforward.
 
-Before running, make sure to install the requirements by running: `pip install -r requirements.txt`
+
+# Getting started
+
+There are a few requirements to run the bot. First, you'll need to install `Python 3.7` or greater. The instructions below show you how to do this in several operating systems
+
+Next, we have provided the web drivers for MacOS, Linux, and Windows, but if they're not there, or you want something more up-to-date than the included drivers, you'll need to download them yourself with the instructions below
+
+Finally, the program is run from the terminal (command line), so you should familiarize yourself with running python programs from the terminal [here](https://realpython.com/run-python-scripts/)
+
+## Downloading python
+
+
+This needs to be Python version `3.7` or up
+
+MacOS
+   * From Python's official website [here](https://www.python.org/downloads/mac-osx/)
+   * If you have [brew](https://brew.sh) installed, you can just run the coommand `brew install python3`
+
+Linux
+   * From Python's official website [here](https://www.python.org/downloads/source/)
+   * Using the package manager for your system. With Ubuntu, this command is `sudo apt install python3-dev`
+
+Windows
+   * From Python's official website [here](https://www.python.org/downloads/windows/)
+   * If you have the [Chocolatey package manager](https://chocolatey.org/) installed, you can run `choco install python`
+
+1. The selenium webdrivers for your chosen browser
+
+
+## Installing the web drivers
+
+* The drivers for most browsers can be found on selenium's site [here](https://www.selenium.dev/documentation/en/getting_started_with_webdriver/browsers/), although at the moment, only Firefox and Chrome are supported
+
+* NOTE: There are already webdrivers for Chrome and Firefox, for MacOS, Linux, and Windows, which will be loaded if no other webdriver is specified manually
+
+# Usage
+
+1. Make sure that you have done all the Pre-installation requirements in the `Getting Started` section above
+
+1. Clone this repository's source code
+   1. If you have git installed, this can be done as easily as `git clone https://github.com/alexschimpf/Snkrs-Bot`
+   1. Otherwise, download the zipped source code and unzip it
+
+1. Navigate to the project's code
+   * `cd path/to/downloaded/project`
+
+1. Install all the Python dependencies by running
+  * `pip install -r requirements.txt`
+
+1. Run the bot
+   * Replace all the fields in the command below with the options that you want, and any of the configuration options listed below
+   ```bash
+   python3 main.py --username myemail@gmail.com --password abc123 --url <your-shoes-url> --shoe-size 6 --driver-type chrome
+   ```
+
+# Configuration options
 
 Here is a list and description of the different arguments to use for the script:
 
@@ -43,10 +98,15 @@ Here is a list and description of the different arguments to use for the script:
 * If given, the bot will take the page source after purchasing and save it at the given file path (may be useful for debugging)
 
 <b>--page-load-timeout</b>
-* This is used to limit the page load time (in seconds), which can be useful when the page is still loading, but the UI is nevertheless useable. This is pretty much a necessity as I've noticed Nike's pages hang all the time. I'd recommend using 1-3 seconds for this. 
+* This is used to limit the page load time (in seconds), which can be useful when the page is still loading, but the UI is nevertheless useable. This is pretty much a necessity as I've noticed Nike's pages hang all the time. I'd recommend using 1-3 seconds for this.
 
 <b>--driver-type</b>
 * Should be 'firefox' or 'chrome' (the OS will be determined for you)
+* Defaults to `Firefox` if nothing is specified
+
+<b>--webdriver-path</b>
+* If specified, will use the specified driver instead of the defaults
+* NOTE: The driver should match the browser specified in the `--driver-type` option (defaults to Firefox)
 
 <b>--headless</b>
 * This will run the driver in headless mode, which should make the bot quicker
@@ -62,30 +122,3 @@ Here is a list and description of the different arguments to use for the script:
 
 <b>--dont-quit</b>
 * Prevent window from closing (not headless mode). Useful if you wish to continue checkout process manually after Buy button is clicked
-
-    
-<br><br><br>
-## Usage (Mac Only)
----
-There are a few requirements to run the bot. First, you'll need to install [Python](https://www.python.org/downloads/) 3.7 or greater. The instructions below show you how to do this easily with [Brew](https://brew.sh/) but visiting Pythons website and downloading is an option but we're not providing instruction on how to do that. Next, if you decide to not use the drivers included with this repository, you'll need to download them yourself [here](https://www.selenium.dev/documentation/en/getting_started_with_webdriver/browsers/). Finally, the program is run from the terminal (command line), so you should familiarize yourself with running python programs from the terminal [here](https://realpython.com/run-python-scripts/).
-
-
-### Instructions
-1. Install Python:<br><br>
-   `brew install python3` (with brew)<br><br>
-
-2. Navigate to the root of the project:<br><br>
-   `cd path/to/downloaded/project`<br><br>
-
-3. Download the dependencies:<br><br>
-   `pip3 install -r requirements.txt`<br><br>
-
-4. (OPTIONAL) Download Chrome or Firefox driver [here](https://www.selenium.dev/documentation/en/getting_started_with_webdriver/browsers/).<br><br>
-5. (OPTIONAL) Unzip the driver(s) and execute the binary.<br><br>
-
-
-6. Run the bot from the project directory:<br><br>
-
-```bash
-$ python3 main.py --username myemail@gmail.com --password abc123 --url <your-shoes-url> --shoe-size 6 --driver-type chrome
-```
