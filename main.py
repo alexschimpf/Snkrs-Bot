@@ -5,6 +5,8 @@ import pause
 import argparse
 import logging.config
 import re
+import time
+import random
 from selenium import webdriver
 from dateutil import parser as date_parser
 from selenium.webdriver.common.by import By
@@ -141,14 +143,44 @@ def login(driver, username, password):
     email_input = driver.find_element_by_xpath("//input[@name='emailAddress']")
     email_input.clear()
     email_input.send_keys(username)
+    
     password_input = driver.find_element_by_xpath("//input[@name='password']")
     password_input.clear()
     password_input.send_keys(password)
 
     LOGGER.info("Logging in")
     driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
-    wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']")
+    
+    sleep_val = 3
+    num_retries_attempted = 0
+    num_retries = 5
+    while True:
+        try:
+            time.sleep(sleep_val)
+            xpath = "/html/body/div[2]/div[3]/div[3]/div/div[2]/input"
+            wait_until_visible(driver=driver, xpath=xpath, duration=5)
+            driver.find_element_by_xpath(xpath).click()
+        
+            password_input = driver.find_element_by_xpath("//input[@name='password']")
+            password_input.clear()
+            password_input.send_keys(password)
 
+            LOGGER.info("Logging in")
+            driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
+            sleep_val += random.randint(0,10)
+
+            if num_retries_attempted < num_retries:
+                num_retries_attempted += 1
+                continue
+            else:
+                LOGGER.info("Too many login attempts. Please restart app.")
+                break
+        except Exception as e:
+            LOGGER.exception("Error dialog did not load, proceed. Error: " + str(e))
+            break
+
+    wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']")
+    
     LOGGER.info("Successfully logged in")
 
 
