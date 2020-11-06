@@ -252,32 +252,44 @@ if __name__ == "__main__":
     parser.add_argument("--num-retries", type=int, default=1)
     parser.add_argument("--dont-quit", action="store_true")
     parser.add_argument("--shoe-type", default="M", choices=("M", "F", "W", "Y", "C"))
+    parser.add_argument("--webdriver-path", required=False, default=None)
     args = parser.parse_args()
 
     driver = None
+
     if args.driver_type == "firefox":
         options = webdriver.FirefoxOptions()
         if args.headless:
             options.add_argument("--headless")
-        if sys.platform == "darwin":
+        if args.webdriver_path != None:
+            executable_path = args.webdriver_path
+        elif sys.platform == "darwin":
             executable_path = "./bin/geckodriver_mac"
         elif "linux" in sys.platform:
             executable_path = "./bin/geckodriver_linux"
+        elif "win32" in sys.platform:
+            executable_path = "./bin/geckodriver_win32.exe"
         else:
-            raise Exception("Unsupported operating system. Please add your own Selenium driver for it.")
+            raise Exception("Drivers for installed operating system not found. Try specifying the path to the drivers with the --webdriver-path option")
         driver = webdriver.Firefox(executable_path=executable_path, firefox_options=options, log_path=os.devnull)
     elif args.driver_type == "chrome":
         options = webdriver.ChromeOptions()
         if args.headless:
             options.add_argument("headless")
-        if sys.platform == "darwin":
+        if args.webdriver_path != None:
+            executable_path = args.webdriver_path
+        elif sys.platform == "darwin":
             executable_path = "./bin/chromedriver_mac"
         elif "linux" in sys.platform:
             executable_path = "./bin/chromedriver_linux"
+        elif "win32" in sys.platform:
+            executable_path = "./bin/chromedriver_win32.exe"
         else:
-            raise Exception("Unsupported operating system. Please add your own Selenium driver for it.")
+            raise Exception("Drivers for installed operating system not found. Try specifying the path to the drivers with the --webdriver-path option")
         driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
-        
+    else:
+        raise Exception("Specified web browser not supported, only Firefox and Chrome are supported at this point")
+
     shoe_type = args.shoe_type
         
     run(driver=driver, shoe_type=shoe_type, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
