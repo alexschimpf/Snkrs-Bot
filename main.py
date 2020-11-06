@@ -178,9 +178,13 @@ def select_shoe_size(driver, shoe_size, shoe_type):
 
 def click_buy_button(driver):
     xpath = "//button[@data-qa='feed-buy-cta']"
+    class_name = "photo-component"
 
     LOGGER.info("Waiting for buy button to become clickable")
     wait_until_clickable(driver, xpath=xpath, duration=10)
+    
+    element = driver.find_element_by_class_name(class_name)
+    driver.execute_script("arguments[0].scrollIntoView(true);" + "window.scrollBy(0,-100);", element)
 
     LOGGER.info("Clicking buy button")
     driver.find_element_by_xpath(xpath).click()
