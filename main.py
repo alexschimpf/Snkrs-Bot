@@ -52,12 +52,23 @@ def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, 
         LOGGER.info("Waiting until login time: " + login_time)
         pause.until(date_parser.parse(login_time))
 
+    skip_retry_login = True
     try:
         login(driver=driver, username=username, password=password)
+    except TimeoutException:
+        LOGGER.info("Failed to login due to timeout. Retrying...")
+        skip_retry_login = False
     except Exception as e:
         LOGGER.exception("Failed to login: " + str(e))
         six.reraise(Exception, e, sys.exc_info()[2])
 
+    if skip_retry_login is False:   
+        try:
+            retry_login(driver=driver, username=username, password=password)
+        except Exception as e:
+            LOGGER.exception("Failed to retry login: " + str(e))
+            six.reraise(Exception, e, sys.exc_info()[2])
+            
     if release_time:
         LOGGER.info("Waiting until release time: " + release_time)
         pause.until(date_parser.parse(release_time))
@@ -151,12 +162,18 @@ def login(driver, username, password):
     LOGGER.info("Logging in")
     driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
     
+    wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']", duration=5)
+    
+    LOGGER.info("Successfully logged in")
+
+def retry_login(driver, username, password):
     sleep_val = 3
     num_retries_attempted = 0
     num_retries = 5
     while True:
         try:
             time.sleep(sleep_val)
+            # Xpath to error dialog button
             xpath = "/html/body/div[2]/div[3]/div[3]/div/div[2]/input"
             wait_until_visible(driver=driver, xpath=xpath, duration=5)
             driver.find_element_by_xpath(xpath).click()
@@ -166,8 +183,18 @@ def login(driver, username, password):
             password_input.send_keys(password)
 
             LOGGER.info("Logging in")
-            driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
-            sleep_val += random.randint(0,10)
+            
+            try:
+                driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
+            except Exception as e:
+                if num_retries_attempted < num_retries:
+                    num_retries_attempted += 1
+                    continue
+                else:
+                    LOGGER.info("Too many login attempts. Please restart app.")
+                    break
+                	
+            sleep_val += random.randint(0,5)
 
             if num_retries_attempted < num_retries:
                 num_retries_attempted += 1
@@ -182,8 +209,7 @@ def login(driver, username, password):
     wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']")
     
     LOGGER.info("Successfully logged in")
-
-
+    
 def select_shoe_size(driver, shoe_size, shoe_type):
     LOGGER.info("Waiting for size dropdown to appear")
     wait_until_visible(driver, class_name="size-grid-button", duration=10)
