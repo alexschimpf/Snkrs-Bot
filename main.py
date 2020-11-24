@@ -167,12 +167,10 @@ def login(driver, username, password):
     LOGGER.info("Successfully logged in")
 
 def retry_login(driver, username, password):
-    sleep_val = 3
     num_retries_attempted = 0
     num_retries = 5
     while True:
-        try:
-            time.sleep(sleep_val)
+        try:            
             # Xpath to error dialog button
             xpath = "/html/body/div[2]/div[3]/div[3]/div/div[2]/input"
             wait_until_visible(driver=driver, xpath=xpath, duration=5)
@@ -193,9 +191,7 @@ def retry_login(driver, username, password):
                 else:
                     LOGGER.info("Too many login attempts. Please restart app.")
                     break
-                	
-            sleep_val += random.randint(0,5)
-
+                	            
             if num_retries_attempted < num_retries:
                 num_retries_attempted += 1
                 continue
