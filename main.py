@@ -95,7 +95,7 @@ def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, 
                 LOGGER.exception("Failed to click buy button: " + str(e))
                 six.reraise(Exception, e, sys.exc_info()[2])
 
-            if cvv is not None:
+            if cvv is None:
                 if select_payment:
                     try:
                         select_payment_option(driver=driver)
@@ -277,9 +277,9 @@ def click_submit_button(driver):
     driver.find_element_by_xpath(xpath).click()
 
 def insert_cvv_number(driver, cvv):
-    cvv_text_box = driver.find_element_by_id("cvNumber")
-
     time.sleep(.2)
+
+    cvv_text_box = driver.find_element_by_id("cvNumber")
 
     cvv_text_box.send_keys(cvv)
 
