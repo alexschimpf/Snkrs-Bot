@@ -44,7 +44,7 @@ LOGGER = logging.getLogger()
 
 def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, release_time=None,
         page_load_timeout=None, screenshot_path=None, html_path=None, select_payment=False, purchase=False,
-        num_retries=None, dont_quit=False):
+        num_retries=None, dont_quit=False, cvv = None):
     driver.maximize_window()
     driver.set_page_load_timeout(page_load_timeout)
 
@@ -95,18 +95,21 @@ def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, 
                 LOGGER.exception("Failed to click buy button: " + str(e))
                 six.reraise(Exception, e, sys.exc_info()[2])
 
-            if select_payment:
-                try:
-                    select_payment_option(driver=driver)
-                except Exception as e:
-                    LOGGER.exception("Failed to select payment option: " + str(e))
-                    six.reraise(Exception, e, sys.exc_info()[2])
+            if cvv is not None:
+                if select_payment:
+                    try:
+                        select_payment_option(driver=driver)
+                    except Exception as e:
+                        LOGGER.exception("Failed to select payment option: " + str(e))
+                        six.reraise(Exception, e, sys.exc_info()[2])
 
-                try:
-                    click_save_button(driver=driver)
-                except Exception as e:
-                    LOGGER.exception("Failed to click save button: " + str(e))
-                    six.reraise(Exception, e, sys.exc_info()[2])
+                    try:
+                        click_save_button(driver=driver)
+                    except Exception as e:
+                        LOGGER.exception("Failed to click save button: " + str(e))
+                        six.reraise(Exception, e, sys.exc_info()[2])
+            else:
+                insert_cvv_number(driver, cvv)
 
             if purchase:
                 try:
@@ -273,6 +276,12 @@ def click_submit_button(driver):
     LOGGER.info("Clicking submit button")
     driver.find_element_by_xpath(xpath).click()
 
+def insert_cvv_number(driver, cvv):
+    cvv_text_box = driver.find_element_by_id("cvNumber")
+
+    time.sleep(.2)
+
+    cvv_text_box.send_keys(cvv)
 
 def wait_until_clickable(driver, xpath=None, class_name=None, duration=10000, frequency=0.01):
     if xpath:
@@ -349,4 +358,4 @@ if __name__ == "__main__":
     run(driver=driver, shoe_type=shoe_type, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
         login_time=args.login_time, release_time=args.release_time, page_load_timeout=args.page_load_timeout,
         screenshot_path=args.screenshot_path, html_path=args.html_path, select_payment=args.select_payment,
-        purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit)
+        purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit, cvv = args.cvv)
