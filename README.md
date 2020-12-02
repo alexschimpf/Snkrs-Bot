@@ -78,12 +78,27 @@ Here is a list and description of the different arguments to use for the script:
 
 <b>--url</b>
 * URL for desired shoe
+* Size parameter can also be passed in (for example: https://www.nike.com/launch/t/kobe-5-protro-bruce-lee?size=11). In this case, `--shoe-size` and `--shoe-type` will be ignored
+* DO NOT pass in size parameter with url on releases with "Additional Size Ranges" (i.e. children's shoes on same page) as it can lead to unexpected results
 
 <b>--shoe-size</b>
 * Self-explanatory
 
 <b>--shoe-type</b>
 * Men's (M), Women's (W), Youth (Y) or Child (C)
+* For special releases (i.e. Air Presto), can pass in XXS, XS, S, M, L or XL. You do not need to pass in shoe size
+
+<b>--cvv</b>
+* Card Verification Value for your stored credit card
+* May not be needed in some cases (for example, if you have previously purchased a release with a stored credit card)
+
+<b>--shipping-option</b>
+* STANDARD, TWO_DAY or NEXT_DAY
+
+<b>--shipping-address</b>
+* If given, the bot will attempt to add a new shipping address in some scenarios
+* In some cases, checkout will not proceed without adding a new shipping address. If you are unsure, include it
+* Must be in this format: '{"first_name":"John", "last_name":"Doe", "address":"1313 Mockingbird Lane", "apt":"", "city":"Long Beach", "state":"CA", "zip_code":"90712", "phone_number":"9999999999"}'
 
 <b>--login-time</b>
 * If given, the bot will pause until a specific time before it logs in (can be any datetime format)
@@ -121,4 +136,4 @@ Here is a list and description of the different arguments to use for the script:
 * If the bot fails for some reason, it will retry any number of times or until successful
 
 <b>--dont-quit</b>
-* Prevent window from closing (not headless mode). Useful if you wish to continue checkout process manually after Buy button is clicked
+* Prevent browser from closing. Please note, if you are passing the `--purchase` parameter, it may be necessary to pass this parameter in
