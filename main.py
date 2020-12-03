@@ -56,7 +56,7 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
     if login_time:
         LOGGER.info("Waiting until login time: " + login_time)
         pause.until(date_parser.parse(login_time))
-	
+
     skip_retry_login = True
     try:
         login(driver=driver, username=username, password=password)
@@ -73,7 +73,7 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
         except Exception as e:
             LOGGER.exception("Failed to retry login: " + str(e))
             six.reraise(Exception, e, sys.exc_info()[2])
-
+     
     if release_time:
         LOGGER.info("Waiting until release time: " + release_time)
         pause.until(date_parser.parse(release_time))
@@ -352,8 +352,7 @@ def retry_login(driver, username, password):
     wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']")
     
     LOGGER.info("Successfully logged in")
-
-
+    
 def select_shoe_size(driver, shoe_size, shoe_type, skip_size_selection):
     LOGGER.info("Waiting for size dropdown to appear")
 
