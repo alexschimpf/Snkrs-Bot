@@ -81,7 +81,6 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
     skip_add_address = False
     skip_select_shipping = False
     skip_payment = False
-    retry_save = False
     num_retries_attempted = 0
     while True:
         try:
@@ -108,52 +107,7 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
                 LOGGER.exception("Failed to click buy button: " + str(e))                                
                 six.reraise(Exception, e, sys.exc_info()[2])
                 
-            #Loop to determine which element appears first
-            #Limit this loop as "Verify Phone Number" dialog may appear
-            checkout_num_retries_attempted = 0
-            checkout_num_retries = 25
-            while True:
-                try:
-                    check_add_new_address_button(driver=driver)
-                    LOGGER.info("New Address button appeared!")
-                    break
-                except Exception as e:
-                    LOGGER.exception("Failed visibility check for Add New Address button: " + str(e))
-                    
-                try:
-                    check_shipping(driver=driver)
-                    LOGGER.info("Shipping options appeared!")
-                    skip_add_address = True
-                    break
-                except Exception as e:
-                    LOGGER.exception("Failed visibility check for Shipping options: " + str(e))
-                    
-                try:
-                    check_payment(driver=driver)
-                    LOGGER.info("Payment appeared!")
-                    skip_add_address = True
-                    skip_select_shipping = True
-                    break
-                except Exception as e:
-                    LOGGER.exception("Failed visibility check for Payment: " + str(e))
-                
-                try:
-                    xpath = SUBMIT_BUTTON_XPATH
-                    check_submit_button(driver=driver, xpath_o=xpath)
-                    LOGGER.info("Submit Button appeared!")
-                    skip_add_address = True
-                    skip_select_shipping = True
-                    skip_payment = True
-                    break
-                except Exception as e:
-                    LOGGER.exception("Failed visibility check for Submit Button: " + str(e))
-                    
-                if checkout_num_retries_attempted < checkout_num_retries:
-                    checkout_num_retries_attempted += 1
-                    continue
-                else:
-                    LOGGER.info("Too many iterations through checkout element check. Terminating check...")
-                    break
+            skip_add_address, skip_select_shipping, skip_payment = poll_checkout_phase_one(driver=driver, skip_add_address=skip_add_address, skip_select_shipping=skip_select_shipping, skip_payment=skip_payment)
                     
             if skip_add_address is False and shipping_address:
                 try:
@@ -162,9 +116,8 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
                     LOGGER.exception("Failed to click Add New Address button: " + str(e))
                     six.reraise(Exception, e, sys.exc_info()[2])
                               
-                try:
-                    shipping_address_data=json.loads(shipping_address)
-                    input_address(driver=driver, shipping_address=shipping_address_data)
+                try:                    
+                    input_address(driver=driver, shipping_address=shipping_address)
                 except Exception as e:
                     LOGGER.exception("Failed to select address: " + str(e))
                     six.reraise(Exception, e, sys.exc_info()[2])
@@ -186,49 +139,17 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
                     click_save_button(driver=driver)
                 except StaleElementReferenceException:
                     LOGGER.info("Failed to click save button (StaleElementReferenceException). Retrying once...")
-                    retry_save = True
-                except Exception as e:
-                    LOGGER.exception("Failed to click save button: " + str(e))
-                    six.reraise(Exception, e, sys.exc_info()[2])
-                    
-                if retry_save:
                     try:
                         click_save_button(driver=driver, check_disabled=False)
                     except Exception as e:
                         LOGGER.exception("Failed to click save button: " + str(e))
                         six.reraise(Exception, e, sys.exc_info()[2])
-                        
-                retry_save = False
-                    
-                #Loop again to determine which element appears first
-                # as we don't know which will appear next
-                checkout_num_retries_attempted = 0
-                checkout_num_retries = 25
-                while True:
-                                        
-                    try:
-                        check_payment(driver=driver)
-                        LOGGER.info("Payment appeared!")
-                        break
-                    except Exception as e:
-                        LOGGER.exception("Failed visibility check #2 for Payment: " + str(e))
+                except Exception as e:
+                    LOGGER.exception("Failed to click save button: " + str(e))
+                    six.reraise(Exception, e, sys.exc_info()[2])
                 
-                    try:
-                        xpath = SUBMIT_BUTTON_XPATH
-                        check_submit_button(driver=driver, xpath_o=xpath)
-                        LOGGER.info("Submit Button appeared!")
-                        skip_payment = True
-                        break
-                    except Exception as e:
-                        LOGGER.exception("Failed visibility check #2 for Submit Button: " + str(e))
-                    
-                    if checkout_num_retries_attempted < checkout_num_retries:
-                        checkout_num_retries_attempted += 1
-                        continue
-                    else:
-                        LOGGER.info("Too many iterations through checkout element check #2. Terminating check...")
-                        break
-            
+                skip_payment = poll_checkout_phase_two(driver=driver, skip_payment=skip_payment)
+                                                 
             if skip_payment is False:
                 if select_payment:
                     try:
@@ -565,6 +486,87 @@ def click_submit_button(driver, xpath_o=None):
     LOGGER.info("Clicking submit button")
     driver.find_element_by_xpath(xpath).click()
 
+def poll_checkout_phase_one(driver, skip_add_address=False, skip_select_shipping=False, skip_payment=False):
+    #Loop to determine which element appears first
+    #Limit this loop as "Verify Phone Number" dialog may appear
+    checkout_num_retries_attempted = 0
+    checkout_num_retries = 25
+    while True:
+        try:
+            check_add_new_address_button(driver=driver)
+            LOGGER.info("New Address button appeared!")
+            break
+        except Exception as e:
+            LOGGER.exception("Failed visibility check for Add New Address button: " + str(e))
+            
+        try:
+            check_shipping(driver=driver)
+            LOGGER.info("Shipping options appeared!")
+            skip_add_address = True
+            break
+        except Exception as e:
+            LOGGER.exception("Failed visibility check for Shipping options: " + str(e))
+            
+        try:
+            check_payment(driver=driver)
+            LOGGER.info("Payment appeared!")
+            skip_add_address = True
+            skip_select_shipping = True
+            break
+        except Exception as e:
+            LOGGER.exception("Failed visibility check for Payment: " + str(e))
+        
+        try:
+            xpath = SUBMIT_BUTTON_XPATH
+            check_submit_button(driver=driver, xpath_o=xpath)
+            LOGGER.info("Submit Button appeared!")
+            skip_add_address = True
+            skip_select_shipping = True
+            skip_payment = True
+            break
+        except Exception as e:
+            LOGGER.exception("Failed visibility check for Submit Button: " + str(e))
+            
+        if checkout_num_retries_attempted < checkout_num_retries:
+            checkout_num_retries_attempted += 1
+            continue
+        else:
+            LOGGER.info("Too many iterations through checkout element check. Terminating check...")
+            break
+            
+        return skip_add_address, skip_select_shipping, skip_payment
+        
+def poll_checkout_phase_two(driver, skip_payment=False):
+    #Loop again to determine which element appears first
+    # as we don't know which will appear next
+    checkout_num_retries_attempted = 0
+    checkout_num_retries = 25
+    while True:
+                            
+        try:
+            check_payment(driver=driver)
+            LOGGER.info("Payment appeared!")
+            break
+        except Exception as e:
+            LOGGER.exception("Failed visibility check #2 for Payment: " + str(e))
+    
+        try:
+            xpath = SUBMIT_BUTTON_XPATH
+            check_submit_button(driver=driver, xpath_o=xpath)
+            LOGGER.info("Submit Button appeared!")
+            skip_payment = True
+            break
+        except Exception as e:
+            LOGGER.exception("Failed visibility check #2 for Submit Button: " + str(e))
+        
+        if checkout_num_retries_attempted < checkout_num_retries:
+            checkout_num_retries_attempted += 1
+            continue
+        else:
+            LOGGER.info("Too many iterations through checkout element check #2. Terminating check...")
+            break
+        
+        return skip_payment
 
 def wait_until_clickable(driver, xpath=None, class_name=None, el_id=None, duration=10000, frequency=0.01):
     if xpath:
@@ -656,8 +658,13 @@ if __name__ == "__main__":
     
     if shoe_size is None and shoe_type in ("Y", "C", "W"):
     	raise Exception("Shoe size parameter must be passed in with your shoe type " + shoe_type + ".")
-        
+    
+    if args.shipping_address: 
+        shipping_address=json.loads(args.shipping_address)
+    else:
+        shipping_address=None
+    
     run(driver=driver, shoe_type=shoe_type, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size, shipping_option=args.shipping_option,
-        login_time=args.login_time, release_time=args.release_time, shipping_address=args.shipping_address, page_load_timeout=args.page_load_timeout,
+        login_time=args.login_time, release_time=args.release_time, shipping_address=shipping_address, page_load_timeout=args.page_load_timeout,
         screenshot_path=args.screenshot_path, html_path=args.html_path, select_payment=args.select_payment,
         purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit)
