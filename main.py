@@ -107,7 +107,7 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
                 LOGGER.exception("Failed to click buy button: " + str(e))                                
                 six.reraise(Exception, e, sys.exc_info()[2])
                 
-            skip_add_address, skip_select_shipping, skip_payment = poll_checkout_phase_one(driver=driver, skip_add_address=skip_add_address, skip_select_shipping=skip_select_shipping, skip_payment=skip_payment)
+            skip_add_address, skip_select_shipping, skip_payment = poll_checkout_phase_one(driver=driver)
                     
             if skip_add_address is False and shipping_address:
                 try:
@@ -148,7 +148,7 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
                     LOGGER.exception("Failed to click save button: " + str(e))
                     six.reraise(Exception, e, sys.exc_info()[2])
                 
-                skip_payment = poll_checkout_phase_two(driver=driver, skip_payment=skip_payment)
+                skip_payment = poll_checkout_phase_two(driver=driver)
                                                  
             if skip_payment is False:
                 if select_payment:
@@ -187,6 +187,9 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
         except Exception:
             if num_retries and num_retries_attempted < num_retries:
                 num_retries_attempted += 1
+                skip_add_address = False
+                skip_select_shipping = False
+                skip_payment = False
                 continue
             else:
                 LOGGER.info("Purchase failed")
@@ -486,11 +489,14 @@ def click_submit_button(driver, xpath_o=None):
     LOGGER.info("Clicking submit button")
     driver.find_element_by_xpath(xpath).click()
 
-def poll_checkout_phase_one(driver, skip_add_address=False, skip_select_shipping=False, skip_payment=False):
+def poll_checkout_phase_one(driver):
     #Loop to determine which element appears first
     #Limit this loop as "Verify Phone Number" dialog may appear
     checkout_num_retries_attempted = 0
     checkout_num_retries = 25
+    skip_add_address = False
+    skip_select_shipping = False
+    skip_payment = False
     while True:
         try:
             check_add_new_address_button(driver=driver)
@@ -536,11 +542,12 @@ def poll_checkout_phase_one(driver, skip_add_address=False, skip_select_shipping
             
         return skip_add_address, skip_select_shipping, skip_payment
         
-def poll_checkout_phase_two(driver, skip_payment=False):
+def poll_checkout_phase_two(driver):
     #Loop again to determine which element appears first
     # as we don't know which will appear next
     checkout_num_retries_attempted = 0
     checkout_num_retries = 25
+    skip_payment = False
     while True:
                             
         try:
