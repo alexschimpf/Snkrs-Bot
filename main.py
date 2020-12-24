@@ -674,4 +674,4 @@ if __name__ == "__main__":
     run(driver=driver, shoe_type=shoe_type, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size, shipping_option=args.shipping_option,
         login_time=args.login_time, release_time=args.release_time, shipping_address=shipping_address, page_load_timeout=args.page_load_timeout,
         screenshot_path=args.screenshot_path, html_path=args.html_path, select_payment=args.select_payment,
-        purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit)
+        purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit, cvv=args.cvv)
