@@ -119,6 +119,10 @@ Here is a list and description of the different arguments to use for the script:
 * If specified, will use the specified driver instead of the defaults
 * NOTE: The driver should match the browser specified in the `--driver-type` option (defaults to Firefox)
 
+<b>--cvv</b>
+* Card Verification Value for your stored credit card
+* May not be needed in some cases (for example, if you have previously purchased a release with a stored credit card)
+
 <b>--headless</b>
 * This will run the driver in headless mode, which should make the bot quicker
 
