@@ -73,6 +73,7 @@ Windows
    python3 GUI.py
    ```
    * Replace all the fields in the GUI below with the options that you want.
+   
 ![GUI Bot](https://i.imgur.com/D9qySwA.png)
 
 
