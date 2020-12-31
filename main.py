@@ -42,9 +42,10 @@ logging.config.dictConfig({
 NIKE_HOME_URL = "https://www.nike.com/login"
 LOGGER = logging.getLogger()
 
+
 def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, release_time=None,
         page_load_timeout=None, screenshot_path=None, html_path=None, select_payment=False, purchase=False,
-        num_retries=None, dont_quit=False):
+        num_retries=None, dont_quit=False, cvv=None):
     driver.maximize_window()
     driver.set_page_load_timeout(page_load_timeout)
 
@@ -62,13 +63,13 @@ def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, 
         LOGGER.exception("Failed to login: " + str(e))
         six.reraise(Exception, e, sys.exc_info()[2])
 
-    if skip_retry_login is False:   
+    if skip_retry_login is False:
         try:
             retry_login(driver=driver, username=username, password=password)
         except Exception as e:
             LOGGER.exception("Failed to retry login: " + str(e))
             six.reraise(Exception, e, sys.exc_info()[2])
-            
+
     if release_time:
         LOGGER.info("Waiting until release time: " + release_time)
         pause.until(date_parser.parse(release_time))
@@ -81,9 +82,10 @@ def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, 
                 driver.get(url)
             except TimeoutException:
                 LOGGER.info("Page load timed out but continuing anyway")
-            
+
             try:
-                select_shoe_size(driver=driver, shoe_size=shoe_size, shoe_type=shoe_type)
+                select_shoe_size(
+                    driver=driver, shoe_size=shoe_size, shoe_type=shoe_type)
             except Exception as e:
                 # Try refreshing page since you can't click Buy button without selecting size
                 LOGGER.exception("Failed to select shoe size: " + str(e))
@@ -95,24 +97,30 @@ def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, 
                 LOGGER.exception("Failed to click buy button: " + str(e))
                 six.reraise(Exception, e, sys.exc_info()[2])
 
-            if select_payment:
-                try:
-                    select_payment_option(driver=driver)
-                except Exception as e:
-                    LOGGER.exception("Failed to select payment option: " + str(e))
-                    six.reraise(Exception, e, sys.exc_info()[2])
+            if cvv is None:
+                if select_payment:
+                    try:
+                        select_payment_option(driver=driver)
+                    except Exception as e:
+                        LOGGER.exception(
+                            "Failed to select payment option: " + str(e))
+                        six.reraise(Exception, e, sys.exc_info()[2])
 
-                try:
-                    click_save_button(driver=driver)
-                except Exception as e:
-                    LOGGER.exception("Failed to click save button: " + str(e))
-                    six.reraise(Exception, e, sys.exc_info()[2])
+                    try:
+                        click_save_button(driver=driver)
+                    except Exception as e:
+                        LOGGER.exception(
+                            "Failed to click save button: " + str(e))
+                        six.reraise(Exception, e, sys.exc_info()[2])
+            else:
+                insert_cvv_number(driver, cvv)
 
             if purchase:
                 try:
                     click_submit_button(driver=driver)
                 except Exception as e:
-                    LOGGER.exception("Failed to click submit button: " + str(e))
+                    LOGGER.exception(
+                        "Failed to click submit button: " + str(e))
                     six.reraise(Exception, e, sys.exc_info()[2])
 
             LOGGER.info("Purchased shoe")
@@ -136,7 +144,7 @@ def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, 
     if dont_quit:
         LOGGER.info("Preventing driver quit...")
         input("Press Enter to quit...")
-    
+
     driver.quit()
 
 
@@ -154,36 +162,40 @@ def login(driver, username, password):
     email_input = driver.find_element_by_xpath("//input[@name='emailAddress']")
     email_input.clear()
     email_input.send_keys(username)
-    
+
     password_input = driver.find_element_by_xpath("//input[@name='password']")
     password_input.clear()
     password_input.send_keys(password)
 
     LOGGER.info("Logging in")
     driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
-    
-    wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']", duration=5)
-    
+
+    wait_until_visible(
+        driver=driver, xpath="//a[@data-path='myAccount:greeting']", duration=5)
+
     LOGGER.info("Successfully logged in")
+
 
 def retry_login(driver, username, password):
     num_retries_attempted = 0
     num_retries = 5
     while True:
-        try:            
+        try:
             # Xpath to error dialog button
             xpath = "/html/body/div[2]/div[3]/div[3]/div/div[2]/input"
             wait_until_visible(driver=driver, xpath=xpath, duration=5)
             driver.find_element_by_xpath(xpath).click()
-        
-            password_input = driver.find_element_by_xpath("//input[@name='password']")
+
+            password_input = driver.find_element_by_xpath(
+                "//input[@name='password']")
             password_input.clear()
             password_input.send_keys(password)
 
             LOGGER.info("Logging in")
-            
+
             try:
-                driver.find_element_by_xpath("//input[@value='SIGN IN']").click()
+                driver.find_element_by_xpath(
+                    "//input[@value='SIGN IN']").click()
             except Exception as e:
                 if num_retries_attempted < num_retries:
                     num_retries_attempted += 1
@@ -191,7 +203,7 @@ def retry_login(driver, username, password):
                 else:
                     LOGGER.info("Too many login attempts. Please restart app.")
                     break
-                	            
+
             if num_retries_attempted < num_retries:
                 num_retries_attempted += 1
                 continue
@@ -199,13 +211,16 @@ def retry_login(driver, username, password):
                 LOGGER.info("Too many login attempts. Please restart app.")
                 break
         except Exception as e:
-            LOGGER.exception("Error dialog did not load, proceed. Error: " + str(e))
+            LOGGER.exception(
+                "Error dialog did not load, proceed. Error: " + str(e))
             break
 
-    wait_until_visible(driver=driver, xpath="//a[@data-path='myAccount:greeting']")
-    
+    wait_until_visible(
+        driver=driver, xpath="//a[@data-path='myAccount:greeting']")
+
     LOGGER.info("Successfully logged in")
-    
+
+
 def select_shoe_size(driver, shoe_size, shoe_type):
     LOGGER.info("Waiting for size dropdown to appear")
     wait_until_visible(driver, class_name="size-grid-button", duration=10)
@@ -213,18 +228,19 @@ def select_shoe_size(driver, shoe_size, shoe_type):
     LOGGER.info("Selecting size from dropdown")
 
     # Get first element found text
-    size_text = driver.find_element_by_xpath("//li[@data-qa='size-available']/button").text
-            
+    size_text = driver.find_element_by_xpath(
+        "//li[@data-qa='size-available']/button").text
+
     # Determine if size only displaying or size type + size
-    if re.search("[a-zA-Z]", size_text):      
+    if re.search("[a-zA-Z]", size_text):
         if shoe_type in ("Y", "C"):
             shoe_size_type = shoe_size + shoe_type
         else:
             shoe_size_type = shoe_type + " " + shoe_size
-     
+
         driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
             "//button[text()[contains(.,'"+shoe_size_type+"')]]").click()
-    
+
     else:
         driver.find_element_by_xpath("//li[@data-qa='size-available']").find_element_by_xpath(
             "//button[text()='{}']".format(shoe_size)).click()
@@ -236,9 +252,10 @@ def click_buy_button(driver):
 
     LOGGER.info("Waiting for buy button to become clickable")
     wait_until_clickable(driver, xpath=xpath, duration=10)
-    
+
     element = driver.find_element_by_class_name(class_name)
-    driver.execute_script("arguments[0].scrollIntoView(true);" + "window.scrollBy(0,-100);", element)
+    driver.execute_script(
+        "arguments[0].scrollIntoView(true);" + "window.scrollBy(0,-100);", element)
 
     LOGGER.info("Clicking buy button")
     driver.find_element_by_xpath(xpath).click()
@@ -274,18 +291,30 @@ def click_submit_button(driver):
     driver.find_element_by_xpath(xpath).click()
 
 
+def insert_cvv_number(driver, cvv):
+    time.sleep(.2)
+
+    cvv_text_box = driver.find_element_by_id("cvNumber")
+
+    cvv_text_box.send_keys(cvv)
+
+
 def wait_until_clickable(driver, xpath=None, class_name=None, duration=10000, frequency=0.01):
     if xpath:
-        WebDriverWait(driver, duration, frequency).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+        WebDriverWait(driver, duration, frequency).until(
+            EC.element_to_be_clickable((By.XPATH, xpath)))
     elif class_name:
-        WebDriverWait(driver, duration, frequency).until(EC.element_to_be_clickable((By.CLASS_NAME, class_name)))
+        WebDriverWait(driver, duration, frequency).until(
+            EC.element_to_be_clickable((By.CLASS_NAME, class_name)))
 
 
 def wait_until_visible(driver, xpath=None, class_name=None, duration=10000, frequency=0.01):
     if xpath:
-        WebDriverWait(driver, duration, frequency).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        WebDriverWait(driver, duration, frequency).until(
+            EC.visibility_of_element_located((By.XPATH, xpath)))
     elif class_name:
-        WebDriverWait(driver, duration, frequency).until(EC.visibility_of_element_located((By.CLASS_NAME, class_name)))
+        WebDriverWait(driver, duration, frequency).until(
+            EC.visibility_of_element_located((By.CLASS_NAME, class_name)))
 
 
 if __name__ == "__main__":
@@ -299,14 +328,17 @@ if __name__ == "__main__":
     parser.add_argument("--screenshot-path", default=None)
     parser.add_argument("--html-path", default=None)
     parser.add_argument("--page-load-timeout", type=int, default=2)
-    parser.add_argument("--driver-type", default="firefox", choices=("firefox", "chrome"))
+    parser.add_argument("--driver-type", default="firefox",
+                        choices=("firefox", "chrome"))
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--select-payment", action="store_true")
     parser.add_argument("--purchase", action="store_true")
     parser.add_argument("--num-retries", type=int, default=1)
     parser.add_argument("--dont-quit", action="store_true")
-    parser.add_argument("--shoe-type", default="M", choices=("M", "F", "W", "Y", "C"))
+    parser.add_argument("--shoe-type", default="M",
+                        choices=("M", "F", "W", "Y", "C"))
     parser.add_argument("--webdriver-path", required=False, default=None)
+    parser.add_argument("--cvv", required=False)
     args = parser.parse_args()
 
     driver = None
@@ -324,8 +356,10 @@ if __name__ == "__main__":
         elif "win32" in sys.platform:
             executable_path = "./bin/geckodriver_win32.exe"
         else:
-            raise Exception("Drivers for installed operating system not found. Try specifying the path to the drivers with the --webdriver-path option")
-        driver = webdriver.Firefox(executable_path=executable_path, firefox_options=options, log_path=os.devnull)
+            raise Exception(
+                "Drivers for installed operating system not found. Try specifying the path to the drivers with the --webdriver-path option")
+        driver = webdriver.Firefox(
+            executable_path=executable_path, firefox_options=options, log_path=os.devnull)
     elif args.driver_type == "chrome":
         options = webdriver.ChromeOptions()
         if args.headless:
@@ -339,14 +373,17 @@ if __name__ == "__main__":
         elif "win32" in sys.platform:
             executable_path = "./bin/chromedriver_win32.exe"
         else:
-            raise Exception("Drivers for installed operating system not found. Try specifying the path to the drivers with the --webdriver-path option")
-        driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
+            raise Exception(
+                "Drivers for installed operating system not found. Try specifying the path to the drivers with the --webdriver-path option")
+        driver = webdriver.Chrome(
+            executable_path=executable_path, chrome_options=options)
     else:
-        raise Exception("Specified web browser not supported, only Firefox and Chrome are supported at this point")
+        raise Exception(
+            "Specified web browser not supported, only Firefox and Chrome are supported at this point")
 
     shoe_type = args.shoe_type
-        
+
     run(driver=driver, shoe_type=shoe_type, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size,
         login_time=args.login_time, release_time=args.release_time, page_load_timeout=args.page_load_timeout,
         screenshot_path=args.screenshot_path, html_path=args.html_path, select_payment=args.select_payment,
-        purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit)
+        purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit, cvv=args.cvv)
