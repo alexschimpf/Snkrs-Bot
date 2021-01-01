@@ -122,3 +122,17 @@ Here is a list and description of the different arguments to use for the script:
 
 <b>--dont-quit</b>
 * Prevent window from closing (not headless mode). Useful if you wish to continue checkout process manually after Buy button is clicked
+
+# GUI Guide
+
+The GUI is built with PySimpleGUI
+  ```
+   pip install PySimpleGUI
+   ```
+
+<b>Launch the GUI by running</b>
+ ```
+   python3 gui.py
+ ```
+<b>Changing arguments</b>
+the ```runcommand``` variable holds all the arguments in a string and they can be configured in the manner listed in the "Configuration Options" settings above

@@ -42,6 +42,8 @@ logging.config.dictConfig({
 NIKE_HOME_URL = "https://www.nike.com/login"
 LOGGER = logging.getLogger()
 
+
+
 def run(driver, shoe_type, username, password, url, shoe_size, login_time=None, release_time=None,
         page_load_timeout=None, screenshot_path=None, html_path=None, select_payment=False, purchase=False,
         num_retries=None, dont_quit=False):
@@ -191,7 +193,7 @@ def retry_login(driver, username, password):
                 else:
                     LOGGER.info("Too many login attempts. Please restart app.")
                     break
-                	            
+                                
             if num_retries_attempted < num_retries:
                 num_retries_attempted += 1
                 continue
@@ -328,6 +330,7 @@ if __name__ == "__main__":
         driver = webdriver.Firefox(executable_path=executable_path, firefox_options=options, log_path=os.devnull)
     elif args.driver_type == "chrome":
         options = webdriver.ChromeOptions()
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
         if args.headless:
             options.add_argument("headless")
         if args.webdriver_path != None:
