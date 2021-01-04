@@ -65,6 +65,17 @@ Windows
    ```bash
    python3 main.py --username myemail@gmail.com --password abc123 --url <your-shoes-url> --shoe-size 6 --driver-type chrome
    ```
+   
+   OR
+
+1. Run the GUI
+   ```bash
+   python3 GUI.py
+   ```
+   * Replace all the fields in the GUI below with the options that you want.
+   
+![GUI Bot](https://i.imgur.com/D9qySwA.png)
+
 
 # Configuration options
 
@@ -122,6 +133,10 @@ Here is a list and description of the different arguments to use for the script:
 <b>--webdriver-path</b>
 * If specified, will use the specified driver instead of the defaults
 * NOTE: The driver should match the browser specified in the `--driver-type` option (defaults to Firefox)
+
+<b>--cvv</b>
+* Card Verification Value for your stored credit card
+* May not be needed in some cases (for example, if you have previously purchased a release with a stored credit card)
 
 <b>--headless</b>
 * This will run the driver in headless mode, which should make the bot quicker
