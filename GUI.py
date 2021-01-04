@@ -287,38 +287,8 @@ class BotGUI:
             run(driver=driver, shoe_type="M", username=self.username_entry.get(), password=self.password_entry.get(
             ), url=self.url_entry.get(), shoe_size=self.shoe_size.get(), shipping_option=shipping_option, cvv=self.cvv_entry.get(), purchase=purchase, num_retries=retries, release_time=release_time, page_load_timeout=page_load_timeout)
 
-    # run(driver=driver, shoe_type=shoe_type, username=args.username, password=args.password, url=args.url, shoe_size=args.shoe_size, shipping_option=args.shipping_option,
-    #     login_time=args.login_time, release_time=args.release_time, shipping_address=shipping_address, page_load_timeout=args.page_load_timeout,
-    #     screenshot_path=args.screenshot_path, html_path=args.html_path, select_payment=args.select_payment,
-    #     purchase=args.purchase, num_retries=args.num_retries, dont_quit=args.dont_quit, cvv=args.cvv)
-
-            #  Determines if bot features where disabled.
-            # if(self.login_time_int.get() != 1):
-            #     command += ' --login-time %sh%sm' % (
-            #         self.login_time_hours.get(), self.login_time_minutes.get())
-            # if(self.release_time_int.get() != 1):
-            #     command += ' --release-time %sh' % (self.release_time.get())
-
-            # if(self.retries_int.get() != 1):
-            #     command += ' --num-retries %s' % (self.retries.get())
-
-            # if(self.page_load_int.get() != 1):
-            #     command += ' --page-load-timeout %s' % (
-            #         self.page_load_timeout.get())
-
-            # if(self.headless_int.get() != 0):
-            #     command += ' --headless'
-
-            # if(self.no_quit_int.get() != 0):
-            #     command += ' --dont-quit'
-
-            # if(self.purchase_int.get() != 0):
-            #     command += ' --purchase'
-
-            # print(command)
-            # os.system(command)
-
     def logTimeStatus(self):
+
         #  Removes widget if disable checkbox is checked
         if(self.login_time_int.get() == 0):
             self.login_time_label.grid_remove()
