@@ -672,7 +672,6 @@ if __name__ == "__main__":
     parser.add_argument("--cvv", default=None)
     parser.add_argument("--shipping-address", default=None)
     parser.add_argument("--webdriver-path", required=False, default=None)
-    parser.add_argument("--cvv", required=False)
     args = parser.parse_args()
 
     driver = None
