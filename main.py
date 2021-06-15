@@ -53,8 +53,8 @@ def run(driver, shoe_type, username, password, url, shoe_size, shipping_option, 
     driver.maximize_window()
     driver.set_page_load_timeout(page_load_timeout)
 
-    # Issue : #64 Login does not work. Server cannot be contacted
-    # Issue : #21 Login does not work. Server cannot be contacted
+    # "Unable to connect to our servers" #68
+    # Login is throwing GENERIC "0 - POST request to https://unite.nike.com/login blocked" #21
 
     # if login_time:
     #     LOGGER.info("Waiting until login time: " + login_time)
