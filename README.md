@@ -1,5 +1,6 @@
 # PLEASE READ!
 
+this is a test
 
 This is a Selenium bot for buying a given sneaker from the Nike Snkrs website ON RELEASE DAY.
    It will not work for sneakers that are past their release day (or later in the release day).
